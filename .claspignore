@@ -1,0 +1,9 @@
+# File & Folder yang TIDAK AKAN di-upload ke Google Apps Script
+node_modules/**
+package.json
+package-lock.json
+dev-server.js
+jsconfig.json
+.clasp.json
+.git/**
+*.md

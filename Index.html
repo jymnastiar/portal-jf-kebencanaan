@@ -1,0 +1,379 @@
+<!-- 
+=============================================================================
+FILE 2: Index.html (TULANG PUNGGUNG APLIKASI)
+=============================================================================
+Ibarat sebuah rumah, file ini adalah pondasi dan temboknya.
+Tugas file ini hanya mengatur letak ruangan (Sidebar, Tabel, dan Popup), 
+lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
+=============================================================================
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top"> <!-- Memastikan halaman tidak terjebak di dalam bingkai (iframe) -->
+    <meta charset="utf-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- Wajib agar pas di layar HP -->
+    
+    <title>Portal Data Jabatan Fungsional Kebencanaan Indonesia</title>
+    
+    <!-- MENGAMBIL BAHAN BANGUNAN (LIBRARY) DARI INTERNET -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/zephyr/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css" rel="stylesheet">
+    
+    <!-- 🎨 MENYUNTIKKAN FILE CAT & WARNA KITA (CSS) -->
+    <?!= include('Style'); ?>
+
+  </head>
+  <body>
+
+    <!-- 1. TAMPILAN LOADING AWAL (Layar putih berputar) -->
+    <div id="loading">
+        <img src="https://drive.google.com/thumbnail?id=1ERfOnbrNMlkGsmAzzLe_nLwbjb_9cN8w&sz=w500" alt="Logo BNPB" class="loading-logo">
+        <div id="percentage-text">0%</div>
+        <div class="progress-container"><div id="progress-bar" class="progress-bar-load"></div></div>
+        <div id="loading-icon-container"></div> 
+        <div id="status-text" class="fw-bold text-muted">Mempersiapkan Workspace...</div>
+    </div>
+
+    <!-- 2. PITA ATAS KHUSUS HP -->
+    <div id="mobile-header">
+        <button id="mobile-toggle"><i class="fas fa-bars"></i></button>
+        <div class="d-flex align-items-center flex-grow-1" style="gap: 10px; margin-left: 10px;">
+            <img src="https://drive.google.com/thumbnail?id=1ERfOnbrNMlkGsmAzzLe_nLwbjb_9cN8w&sz=w500" alt="Logo BNPB" style="width: 26px; height: 26px; object-fit: contain;">
+            <div class="mobile-title" style="text-align: left; font-size: 0.95rem; white-space: nowrap;">PORTAL DATA JF KEBENCANAAN</div>
+        </div>
+    </div>
+
+    <!-- 3. BUNGKUSAN UTAMA WEB (Membungkus menu kiri dan isi kanan) -->
+    <div class="wrapper">
+        
+        <!-- MENU SAMPING KIRI (SIDEBAR) -->
+        <nav id="sidebar">
+            <div id="sidebar-content-wrapper">
+                <div class="sidebar-header">
+                    <img src="https://drive.google.com/thumbnail?id=1ERfOnbrNMlkGsmAzzLe_nLwbjb_9cN8w&sz=w500" alt="Logo BNPB" class="sidebar-logo">
+                    <div class="sidebar-title" style="letter-spacing: 1px;">PORTAL DATA<br>JABATAN FUNGSIONAL KEBENCANAAN INDONESIA</div>
+                </div>
+                
+                <ul class="list-unstyled">
+            <li><a onclick="switchMenu('visual')" id="menu-visual" class="active"><i class="fas fa-chart-pie"></i> Dashboard Analitik</a></li>
+            <li><a onclick="switchMenu('data')" id="menu-data"><i class="fas fa-database"></i> Data Pejabat Fungsional</a></li>
+            <li><a onclick="switchMenu('rekap')" id="menu-rekap"><i class="fas fa-chart-bar"></i> Rekapitulasi Data</a></li>
+            <li><a href="javascript:void(0)" onclick="openFormModal()" id="menu-tambah"><i class="fas fa-folder-plus"></i> Tambah Data</a></li>
+            <li><a onclick="openDownloadModal()" id="menu-download"><i class="fas fa-file-export"></i> Download Data</a></li>
+            <li><a href="javascript:void(0)" onclick="openContactModal()" id="menu-wa"><i class="fab fa-whatsapp"></i> Contact Center</a></li>
+        </ul>
+                
+                <div class="online-wrapper mb-2">
+                    <div class="online-box">
+                        <div class="online-dot"></div>
+                        <div><strong id="live-user-count" style="font-size:1.1rem;">...</strong> Online<br><small style="opacity: 0.7; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Real-time Monitor</small></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <div id="sidebarHandle" class="toggle-handle"><i class="fas fa-chevron-left"></i></div>
+
+        <!-- AREA KONTEN UTAMA (Ruangan Putih Sebelah Kanan) -->
+        <div id="content">
+            <div class="page-container-wrapper">
+
+                <!-- HALAMAN 1: TABEL DATA PEJABAT UTAMA -->
+                <div id="page-data" class="main-page" style="display: none;">
+                    <div class="card main-card">
+                        <div class="card-header-area">
+                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <h4 class="fw-bold m-0 text-dark" style="letter-spacing: -0.5px;">Data Jabatan Fungsional Kebencanaan</h4>
+                                </div>
+                                <div class="custom-tabs-container">
+                                    <button onclick="changeTab('PNS')" class="custom-tab-btn active" id="btn-PNS">PNS</button>
+                                    <button onclick="changeTab('PPPK')" class="custom-tab-btn" id="btn-PPPK">PPPK</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Kotak-kotak Filter Pencarian -->
+                            <!-- ✨ KOTAK FILTER PENCARIAN (VERSI RAPI & BER-IKON) ✨ -->
+                            <div class="row g-3 mb-4 row-cols-1 row-cols-md-2 row-cols-lg-5">
+                                <!-- Filter 1: Nama -->
+                                <div class="col">
+                                    <div class="position-relative">
+                                        <i class="fas fa-search position-absolute text-muted" style="top: 50%; left: 16px; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                        <input type="text" class="form-control filter-input input-with-icon" id="fil-nama" placeholder="Cari Nama Pegawai...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Filter 2: Golongan -->
+                                <div class="col" id="wrapper-pangkat">
+                                    <div class="position-relative">
+                                        <i class="fas fa-id-badge position-absolute text-muted" style="top: 50%; left: 16px; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                        <input type="text" class="form-control filter-input input-with-icon" id="fil-pangkat" placeholder="Cari Golongan...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Filter 3: Wilayah -->
+                                <div class="col" id="wrapper-jenis">
+                                    <div class="position-relative">
+                                        <i class="fas fa-map-marker-alt position-absolute text-muted" style="top: 50%; left: 16px; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                        <input type="text" class="form-control filter-input input-with-icon" id="fil-jenis_jabatan" placeholder="Cari Provinsi/Wilayah...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Filter 4: Jabatan -->
+                                <div class="col">
+                                    <div class="position-relative">
+                                        <i class="fas fa-briefcase position-absolute text-muted" style="top: 50%; left: 16px; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                        <input type="text" class="form-control filter-input input-with-icon" id="fil-jabatan" placeholder="Cari Jabatan...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Filter 5: Unit Kerja -->
+                                <div class="col">
+                                    <div class="position-relative">
+                                        <i class="fas fa-building position-absolute text-muted" style="top: 50%; left: 16px; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                        <input type="text" class="form-control filter-input input-with-icon" id="fil-unit_kerja" placeholder="Cari Unit Kerja...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <table id="mainTable" class="table w-100 align-middle"><thead></thead><tbody></tbody></table>
+                    </div>
+                </div>
+
+                <!-- HALAMAN 2: REKAPITULASI (Angka-angka total / Matriks) -->
+                <div class="main-page content-section" id="page-rekap" style="display: none;">
+                  <div class="mb-3">
+                      <h4 class="fw-bold text-dark m-0 border-start border-5 border-primary ps-3">REKAPITULASI DATA PEGAWAI</h4>
+                      <p class="text-muted mt-2 mb-0 ps-3" style="font-size: 0.8rem; max-width: 1000px;">Ringkasan statistik dan distribusi pegawai berdasarkan unit kerja, jabatan, golongan, dan wilayah penugasan.</p>
+                  </div>
+                  
+                  <div class="container-fluid p-0">
+                    
+                    <!-- Pembungkus diubah menjadi vertikal penuh (flex-column) -->
+                    <div class="d-flex flex-column w-100">
+                      
+                      <!-- Navigasi Atas: Menu Anak Rekapitulasi Horizontal (Tanpa Search) -->
+                      <div class="rekap-top-bar bg-white border rounded-3 shadow-sm p-2 px-3 mb-4">
+                        <div class="nav nav-pills rekap-sub-nav d-flex flex-row flex-nowrap overflow-auto gap-2 py-1" id="rekap-sub-tab" role="tablist">
+                          <button class="nav-link active text-nowrap" id="tab-btn-daerah" onclick="switchSubRekap('daerah')"><i class="fas fa-balance-scale me-2"></i>Status Formasi JF</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-unit" onclick="switchSubRekap('unit')"><i class="fas fa-building me-2"></i>Sebaran Unit Kerja</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-jfk" onclick="switchSubRekap('jfk')"><i class="fas fa-briefcase me-2"></i>Rincian JF Kebencanaan</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-jabatan" onclick="switchSubRekap('jabatan')"><i class="fas fa-sitemap me-2"></i>Jenis Jabatan Per-Wilayah</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-pangkat" onclick="switchSubRekap('pangkat')"><i class="fas fa-id-badge me-2"></i>Golongan PNS</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-pppk" onclick="switchSubRekap('pppk')"><i class="fas fa-user-tag me-2"></i>Golongan PPPK</button>
+                          <button class="nav-link text-nowrap" id="tab-btn-gender" onclick="switchSubRekap('gender')"><i class="fas fa-venus-mars me-2"></i>Sebaran Jenis Kelamin</button>
+                        </div>
+                      </div>
+                    </div>
+
+                      <!-- Area Utama Tabel -->
+                      <div class="rekap-main-content w-100">
+                        
+                        <!-- Panel Anak 1: Status Formasi JF -->
+                        <div class="sub-rekap-panel" id="panel-rekap-daerah">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                              <!-- 1. Judul disamakan dengan sidebar -->
+                              <div>
+                                  <h5 class="fw-bold text-dark m-0">
+                                      <i class="fas fa-map-marked-alt text-primary me-2"></i>Keterisian Analis Daerah
+                                  </h5>
+                              </div>
+                              <div class="d-flex align-items-center gap-2">
+                                <button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3 ms-2" onclick="exportTable('tabel-rekap-formasi', 'Status_Formasi_JF')"><i class="fas fa-file-excel me-1"></i> Excel</button>
+                              </div>
+                            </div>
+                            
+                            <!-- 2. Header tabel disamakan dengan style tabel lain (Putih bersih/Abu muda) -->
+                            <div class="custom-table-wrapper" style="max-height: 600px; overflow-y: auto;">
+                              <table class="table table-hover align-middle m-0" id="tabel-rekap-formasi">
+                                <thead>
+                                  <tr>
+                                    <th rowspan="2" class="align-middle" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; z-index: 20; position: sticky; top: 0;">INSTANSI / WILAYAH</th>
+                                    <th colspan="3" class="text-center border-bottom-0" style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">AHLI PERTAMA</th>
+                                    <th colspan="3" class="text-center border-bottom-0" style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">AHLI MUDA</th>
+                                    <th colspan="3" class="text-center border-bottom-0" style="background: #f8fafc; position: sticky; top: 0; z-index: 10;">AHLI MADYA</th>
+                                    <th colspan="3" class="text-center border-bottom-0" style="background: #f8fafc; border-left: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 10;">TOTAL</th>
+                                  </tr>
+                                  <tr>
+                                    <!-- Pertama -->
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Kebutuhan</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Bezetting</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Status</th>
+                                    <!-- Muda -->
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Kebutuhan</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Bezetting</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Status</th>
+                                    <!-- Madya -->
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Kebutuhan</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Bezetting</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Status</th>
+                                    <!-- Total -->
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; border-left: 1px solid #e2e8f0; position: sticky; top: 41px; z-index: 10;">Kebutuhan</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Bezetting</th>
+                                    <th class="text-center text-muted" style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 0.7rem; position: sticky; top: 41px; z-index: 10;">Status</th>
+                                  </tr>
+                                </thead>
+                                <tbody id="tbody-rekap-formasi">
+                                  <!-- Data formasi disuntik di sini -->
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+
+                        
+                        <!-- Panel Anak 2: Sebaran Unit Kerja -->
+                        <div class="sub-rekap-panel" id="panel-rekap-unit" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                              <div><h5 class="fw-bold text-dark m-0"><i class="fas fa-building text-primary me-2"></i>Sebaran Pegawai per Unit Kerja</h5></div>
+                              <div class="d-flex align-items-center gap-2">
+                                <label for="select-prov-unit" class="fw-semibold text-muted small m-0"><i class="fas fa-filter me-1"></i>Filter Unit:</label>
+                                <select id="select-prov-unit" class="form-select form-select-sm border-primary fw-bold" style="width: 240px;" onchange="generateUnitMatrix()"><option value="ALL">-- SEMUA UNIT KERJA --</option><option value="BNPB">BNPB PUSAT</option></select>
+                                <button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3 ms-2" onclick="exportTable('tbl-unit-matrix', 'Rekap_Unit_Kerja')"><i class="fas fa-file-excel me-1"></i> Excel</button>
+                              </div>
+                            </div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-unit-matrix"><thead><tr><th class="th-label">UNIT KERJA</th><th class="th-pertama text-center">PNS</th><th class="th-muda text-center">PPPK</th><th class="th-total text-center">TOTAL SUB-UNIT</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                        <!-- Panel Anak 3: JF Kebencanaan -->
+                        <div class="sub-rekap-panel" id="panel-rekap-jfk" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold text-dark m-0"><i class="fas fa-briefcase text-primary me-2"></i>Rincian JF Kebencanaan</h5><button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3" onclick="exportTable('tbl-jfk-matrix', 'Rekap_JF_Kebencanaan')"><i class="fas fa-file-excel me-1"></i> Excel</button></div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-jfk-matrix"><thead><tr><th class="th-label">NAMA JABATAN</th><th class="th-pertama text-center">PNS</th><th class="th-muda text-center">PPPK</th><th class="th-total text-center">TOTAL</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                        <!-- Panel Anak 4: Jenis Jabatan / Wilayah -->
+                        <div class="sub-rekap-panel" id="panel-rekap-jabatan" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold text-dark m-0"><i class="fas fa-sitemap text-primary me-2"></i>Jenis Jabatan Per-Wilayah</h5><button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3" onclick="exportTable('tbl-jabatan-matrix', 'Rekap_Jenis_Jabatan')"><i class="fas fa-file-excel me-1"></i> Excel</button></div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-jabatan-matrix"><thead><tr><th class="th-label">JENIS JABATAN / WILAYAH</th><th class="th-pertama text-center">PNS</th><th class="th-muda text-center">PPPK</th><th class="th-total text-center">TOTAL</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                        <!-- Panel Anak 5: Golongan PNS -->
+                        <div class="sub-rekap-panel" id="panel-rekap-pangkat" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold text-dark m-0"><i class="fas fa-id-badge text-primary me-2"></i>Golongan PNS</h5><button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3" onclick="exportTable('tbl-pangkat-matrix', 'Rekap_Golongan_PNS')"><i class="fas fa-file-excel me-1"></i> Excel</button></div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-pangkat-matrix"><thead><tr><th class="th-label">PANGKAT / GOLONGAN</th><th class="th-pertama text-center">JUMLAH PNS</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                        <!-- Panel Anak 6: Golongan PPPK -->
+                        <div class="sub-rekap-panel" id="panel-rekap-pppk" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold text-dark m-0"><i class="fas fa-user-tag text-primary me-2"></i>Golongan PPPK</h5><button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3" onclick="exportTable('tbl-pppk-matrix', 'Rekap_Golongan_PPPK')"><i class="fas fa-file-excel me-1"></i> Excel</button></div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-pppk-matrix"><thead><tr><th class="th-label">GOLONGAN PPPK</th><th class="th-muda text-center">JUMLAH PPPK</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                        <!-- Panel Anak 7: Sebaran Gender -->
+                        <div class="sub-rekap-panel" id="panel-rekap-gender" style="display: none;">
+                          <div class="card border-0 shadow-sm rounded-3 p-4 bg-white mb-4">
+                            <div class="d-flex justify-content-between align-items-center mb-3"><h5 class="fw-bold text-dark m-0"><i class="fas fa-venus-mars text-primary me-2"></i>Sebaran Jenis Kelamin</h5><button class="btn btn-sm btn-success shadow-sm fw-bold rounded-pill px-3" onclick="exportTable('tbl-gender-matrix', 'Rekap_Gender')"><i class="fas fa-file-excel me-1"></i> Excel</button></div>
+                            <div class="custom-table-wrapper"><table class="table table-hover align-middle m-0" id="tbl-gender-matrix"><thead><tr><th class="th-label">STATUS KEPEGAWAIAN</th><th class="th-pertama text-center">LAKI-LAKI</th><th class="th-madya text-center">PEREMPUAN</th><th class="th-total text-center">TOTAL</th></tr></thead><tbody></tbody></table></div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- HALAMAN 3: DIAGRAM / VISUAL -->
+                <div id="page-visual" class="main-page" style="display: block; overflow-x: hidden;">
+                    
+                    <!-- IFRAME VERSI DESKTOP (Tampil di Laptop/PC) -->
+                    <iframe 
+                        id="frame-desktop"
+                        src="https://datastudio.google.com/embed/reporting/99faf6ae-33fc-4428-b4d0-7874c5bd1361/page/x5G8F"
+                        style="width: 100%; height: calc(100vh - 90px); border: none; display: block;" 
+                        frameborder="0" 
+                        allowfullscreen>
+                    </iframe>
+
+                    <!-- IFRAME VERSI MOBILE (Tampil di HP) -->
+                    <iframe 
+                        id="frame-mobile"
+                        src="https://datastudio.google.com/embed/reporting/e51b047d-8a3e-42fd-81ed-e84f3fe72b8f/page/x5G8F"
+                        style="width: 100%; height: 1450px; border: none; display: none;" 
+                        frameborder="0" 
+                        allowfullscreen>
+                    </iframe>
+
+                </div>
+                
+    <!-- ======================================================== -->
+    <!-- 4. AREA MODAL POPUP (Jendela yang muncul ke depan layar) -->
+    <!-- ======================================================== -->
+
+    <!-- Jendela Modal Tambah Data Baru -->
+    <div id="modalForm" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center;">
+      
+      <div style="background-color: white; padding: 30px; border-radius: 12px; width: 350px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative;">
+        
+        <!-- Tombol Tutup (X) -->
+        <span onclick="closeFormModal()" style="position: absolute; top: 12px; right: 18px; font-size: 20px; font-weight: bold; color: #888; cursor: pointer;">&times;</span>
+        
+        <h3 style="margin-top: 0; color: #2c3e50; font-family: sans-serif;"><i class="fas fa-file-alt"></i> Pilih Formulir</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 25px;">Silakan pilih status kepegawaian untuk mengisi data baru:</p>
+        
+        <!-- Pilihan Tombol Form -->
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <a href="https://forms.gle/fysRAvPeXWzg1wtB6" target="_blank" onclick="closeFormModal()" style="background-color: #1cc88a; color: white; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: bold; font-family: sans-serif; transition: 0.2s;">
+            PNS
+          </a>
+          <a href="https://forms.gle/Kprk9PNDjiZxA6dUA" target="_blank" onclick="closeFormModal()" style="background-color: #f6c23e; color: #333; padding: 12px; text-decoration: none; border-radius: 8px; font-weight: bold; font-family: sans-serif; transition: 0.2s;">
+            PPPK
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Jendela Popup Download Data (Muncul saat tombol Export Excel diklik) -->
+    <div class="modal fade" id="downloadModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content custom-modal-content"><div class="modal-header custom-modal-header bg-light border-bottom"><h6 class="modal-title custom-modal-title"><i class="fas fa-file-excel text-success me-2"></i>Export Data Pegawai</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body custom-modal-body bg-white pt-4"><div class="mb-3"><label class="form-label fw-bold text-dark mb-2">Pilih Cakupan Data:</label><div class="list-group list-group-flush border rounded shadow-sm" style="max-height: 250px; overflow-y: auto; font-size: 0.85rem;" id="scopeList"></div><input type="hidden" id="downloadScopeVal" value="ALL"></div><div class="alert alert-light border-start border-4 border-success mt-4 mb-0 shadow-sm" style="background: #f8fafc;"><small class="text-muted" id="download-desc"><i class="fas fa-info-circle me-1 text-primary"></i> Data yang diunduh mencakup <b>SELURUH PEGAWAI</b> di database.</small></div></div><div class="modal-footer custom-modal-footer"><button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Batal</button><button type="button" onclick="executeDownload()" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border:none;"><i class="fas fa-download me-2"></i>Download Excel</button></div></div></div></div>
+
+    <!-- Jendela Popup Kontak WA -->
+    <div class="modal fade" id="contactModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content custom-modal-content"><div class="modal-header custom-modal-header bg-light border-bottom"><h6 class="modal-title custom-modal-title"><i class="fab fa-whatsapp text-success me-2"></i>Layanan Contact Center</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body custom-modal-body bg-white pt-4"><div class="row g-3"><div class="col-6"><div class="p-3 border rounded shadow-sm h-100 bg-light"><h6 class="text-center fw-bold mb-3" style="font-size: 0.8rem; color: #334155;"><i class="fas fa-users text-primary mb-1 d-block" style="font-size: 1.3rem;"></i>Info PusBin</h6><a href="https://wa.me/6285691461882" target="_blank" class="btn btn-sm btn-success w-100 mb-2 shadow-sm" style="font-size: 0.75rem; border-radius: 50px;"><i class="fab fa-whatsapp"></i> 0856-9146-1882</a></div></div><div class="col-6"><div class="p-3 border rounded shadow-sm h-100 bg-light"><h6 class="text-center fw-bold mb-3" style="font-size: 0.8rem; color: #334155;"><i class="fas fa-user-tag text-danger mb-1 d-block" style="font-size: 1.3rem;"></i>Data JF<br>(Konfirm, Koreksi)</h6><a href="https://wa.me/6282315220775" target="_blank" class="btn btn-sm btn-success w-100 mb-2 shadow-sm" style="font-size: 0.75rem; border-radius: 50px;"><i class="fab fa-whatsapp"></i> 0823-1522-0775</a></div></div></div><div class="alert mt-4 mb-0 shadow-sm" style="font-size: 0.8rem; border-radius: 12px; border: 1px solid #e2e8f0; border-left: 4px solid #667eea; background: #f8fafc;"><div class="d-flex align-items-start mb-3"><i class="fas fa-building mt-1 me-3" style="font-size: 1.4rem; color: #475569;"></i><div><strong class="d-block mb-1 text-dark">Kunjungan Langsung:</strong><span class="text-muted">Pusat Pembinaan Jabatan Fungsional Kebencanaan,<br>Graha BNPB Lantai 8 <i>(keluar lift belok kiri)</i>.</span></div></div><div class="pt-3" style="border-top: 1px dashed #cbd5e0;"><strong class="d-block mb-2 text-dark"><i class="fas fa-clock me-2" style="color: #667eea;"></i>Jam Pelayanan PusBin:</strong><div id="jam-normal"><div class="d-flex justify-content-between text-muted mb-1"><span>Senin - Kamis</span><span class="fw-bold text-dark">08.00 s.d. 15.30 WIB</span></div><div class="d-flex justify-content-between text-muted"><span>Jumat</span><span class="fw-bold text-dark">08.00 s.d. 16.00 WIB</span></div></div></div></div></div></div></div></div>
+
+    <!-- Jendela Popup Rincian Orang (Muncul saat angka di tabel Rekap diklik) -->
+    <div class="modal fade" id="drilldownModal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content custom-modal-content"><div class="modal-header custom-modal-header border-bottom"><h6 class="modal-title custom-modal-title" id="drilldownTitle">Rincian Pegawai</h6><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body custom-modal-body"><div class="table-responsive"><table id="drilldownTable" class="table w-100 align-middle"><thead></thead><tbody></tbody></table></div></div></div></div></div>
+
+    <!-- Jendela Popup Form Edit Pegawai (Rumah bagi FormEdit.html) -->
+    <div class="modal fade" id="modalEditAksi" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalEditLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);"><div id="konten-modal-edit"><div class="modal-body text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat formulir edit...</p></div></div></div></div></div>
+
+    <!-- ======================================================== -->
+    <!-- 5. MENYUNTIKKAN FILE LOGIKA MESIN DAN FORMULIR KITA      -->
+    <!-- ======================================================== -->
+
+    <!-- Memanggil file FormEdit.html (Disembunyikan agar hanya muncul di dalam Popup) -->
+    <div style="display: none;" id="sumber-form-edit">
+      <?!= include('FormEdit'); ?>
+    </div>
+
+    <!-- Script Library Bawaan Internet (Otak untuk animasi bootstrap dan pembuat Excel) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- ⚙️ MENYUNTIKKAN FILE JAVASCRIPT KITA (Otak Utama Web) -->
+    <?!= include('Script'); ?>
+
+  </body>
+</html>
