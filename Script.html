@@ -73,7 +73,188 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
       }).userHeartbeat(mySessionKey); 
   }
 
+  // =========================================================
+  // STATE & LOGIKA OTORISASI ADMIN
+  // =========================================================
+  window.isAdmin = sessionStorage.getItem('JF_PORTAL_ADMIN') === 'true';
+  window.currentTabType = 'PNS';
+  window.pendingStatusUpdate = null;
+
+  function renderAdminState() {
+    if (window.isAdmin) {
+      $('#btn-admin-login').addClass('d-none');
+      $('#admin-badge-active').removeClass('d-none');
+    } else {
+      $('#btn-admin-login').removeClass('d-none');
+      $('#admin-badge-active').addClass('d-none');
+    }
+  }
+
+  function openAdminModal() {
+    $('#adminLoginError').addClass('d-none');
+    $('#inputAdminPassword').val('');
+    $('#inputAdminPassword').attr('type', 'password');
+    $('#togglePasswordIcon').removeClass('fa-eye-slash').addClass('fa-eye');
+    const modalEl = document.getElementById('adminLoginModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+      setTimeout(() => $('#inputAdminPassword').focus(), 400);
+    }
+  }
+
+  function togglePasswordVisibility() {
+    const input = document.getElementById('inputAdminPassword');
+    const icon = document.getElementById('togglePasswordIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.remove('fa-eye');
+      icon.classList.add('fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.remove('fa-eye-slash');
+      icon.classList.add('fa-eye');
+    }
+  }
+
+  function handleAdminLogin(e) {
+    e.preventDefault();
+    const pw = $('#inputAdminPassword').val();
+    const btn = $('#btnSubmitAdminLogin');
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Memverifikasi...');
+    $('#adminLoginError').addClass('d-none');
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.prop('disabled', false).html('<i class="fas fa-key me-2"></i>Masuk Mode Admin');
+        if (res && res.valid) {
+          window.isAdmin = true;
+          sessionStorage.setItem('JF_PORTAL_ADMIN', 'true');
+          renderAdminState();
+          const modalEl = document.getElementById('adminLoginModal');
+          if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+          }
+          loadData(window.currentTabType || 'PNS');
+          showToastAlert('Mode Admin Aktif! Anda kini dapat mengelola status pegawai.', 'success');
+        } else {
+          $('#adminLoginError').removeClass('d-none');
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.prop('disabled', false).html('<i class="fas fa-key me-2"></i>Masuk Mode Admin');
+        $('#adminLoginError').text('Terjadi kendala saat verifikasi: ' + err.message).removeClass('d-none');
+      })
+      .verifyAdminPassword(pw);
+  }
+
+  function adminLogout() {
+    window.isAdmin = false;
+    sessionStorage.removeItem('JF_PORTAL_ADMIN');
+    renderAdminState();
+    loadData(window.currentTabType || 'PNS');
+    showToastAlert('Anda telah keluar dari Mode Admin.', 'info');
+  }
+
+  function konfirmasiUbahStatus(nip, nama, statusBaru, type) {
+    window.pendingStatusUpdate = { nip, nama, statusBaru, type };
+    $('#confirmPegawaiNama').text(nama || "-");
+    $('#confirmPegawaiNip').text(nip || "-");
+    
+    let badgeClass = 'bg-primary text-white';
+    let badgeStyle = 'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);';
+
+    if (statusBaru === 'Pemberhentian Sementara') {
+      badgeClass = 'bg-warning text-dark';
+      badgeStyle = 'background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fde68a !important; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);';
+    } else if (statusBaru === 'Pemberhentian Tetap') {
+      badgeClass = 'bg-danger text-white';
+      badgeStyle = 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);';
+    } else if (statusBaru === 'Pensiun') {
+      badgeClass = 'bg-info text-white';
+      badgeStyle = 'background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3);';
+    } else if (statusBaru === 'Meninggal Dunia') {
+      badgeClass = 'bg-dark text-white';
+      badgeStyle = 'background: #0f172a !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.4); border: 1px solid #334155 !important;';
+    }
+    
+    $('#confirmPegawaiStatusBaru')
+      .attr('class', 'badge px-3 py-2 rounded-pill fw-bold ' + badgeClass)
+      .attr('style', badgeStyle)
+      .text(statusBaru);
+    $('#statusUpdateAlert').addClass('d-none').empty();
+    $('#btnExecuteStatusChange').prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
+
+    const modalEl = document.getElementById('statusConfirmModal');
+    if (modalEl) {
+      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    }
+  }
+
+  function eksekusiUbahStatus() {
+    if (!window.pendingStatusUpdate) return;
+    const { nip, nama, statusBaru, type } = window.pendingStatusUpdate;
+    const btn = $('#btnExecuteStatusChange');
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan ke Database...');
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
+        if (res && res.success) {
+          // Update data lokal di dataCache
+          if (dataCache[type]) {
+            dataCache[type].forEach(item => {
+              if (item.nip && String(item.nip).replace(/\s+/g, '') === String(nip).replace(/\s+/g, '')) {
+                item.status_pegawai = statusBaru;
+                item._status = statusBaru;
+              }
+            });
+          }
+          const modalEl = document.getElementById('statusConfirmModal');
+          if (modalEl) {
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+          }
+          loadData(type);
+          showToastAlert(`Status untuk <strong>${nama}</strong> berhasil diperbarui menjadi <strong>${statusBaru}</strong> di Google Sheets!`, 'success');
+        } else {
+          $('#statusUpdateAlert').removeClass('d-none').html(`<div class="alert alert-danger p-2 mb-0" style="font-size:0.8rem;"><i class="fas fa-times-circle me-1"></i>${(res && res.message) ? res.message : 'Gagal memperbarui status.'}</div>`);
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
+        $('#statusUpdateAlert').removeClass('d-none').html(`<div class="alert alert-danger p-2 mb-0" style="font-size:0.8rem;"><i class="fas fa-times-circle me-1"></i>Error: ${err.message}</div>`);
+      })
+      .updateStatusPegawai(nip, type, statusBaru);
+  }
+
+  function showToastAlert(pesan, jenis) {
+    var notifDiv = document.getElementById('custom-floating-toast');
+    if (!notifDiv) {
+      notifDiv = document.createElement('div');
+      notifDiv.id = 'custom-floating-toast';
+      notifDiv.style.cssText = 'position:fixed; top:20px; right:20px; z-index:99999; max-width:380px; transition:all 0.4s ease;';
+      document.body.appendChild(notifDiv);
+    }
+    var bgClass = (jenis === 'success') ? 'bg-success text-white' : ((jenis === 'danger') ? 'bg-danger text-white' : 'bg-primary text-white');
+    var icon = (jenis === 'success') ? 'fa-check-circle' : ((jenis === 'danger') ? 'fa-exclamation-circle' : 'fa-info-circle');
+    notifDiv.innerHTML = `
+      <div class="toast show align-items-center ${bgClass} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius:12px;">
+        <div class="d-flex p-3 align-items-center">
+          <i class="fas ${icon} fa-lg me-3"></i>
+          <div class="toast-body p-0" style="font-size:0.85rem;">
+            ${pesan}
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-auto me-1" onclick="this.closest('#custom-floating-toast').innerHTML=''" aria-label="Close"></button>
+        </div>
+      </div>`;
+    setTimeout(() => { if (notifDiv) notifDiv.innerHTML = ''; }, 4500);
+  }
+
 $(document).ready(function() {
+    renderAdminState();
     initLoadSequence();
     sendPing(); setInterval(sendPing, 60000);
     applySeasonalTheme();
@@ -237,11 +418,34 @@ $(document).ready(function() {
         cols.push({ title: "JABATAN", data: null, defaultContent: "-", name: 'jabatan', render: function(d,t,row) { return row.jabatan; } });
         cols.push({ title: "UNIT KERJA", data: null, defaultContent: "-", name: 'unit_kerja', render: (d,t,row) => (row && row.unit_kerja) ? row.unit_kerja : "-" });
         
+        window.currentTabType = type;
         cols.push({
             title: "AKSI", data: null, defaultContent: "", className: "text-center align-middle", orderable: false, width: "80px",
             render: function(data, typeRender, row) {
-                if (typeRender === 'display' && row) return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('ID-1001')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
-                return "";
+                if (typeRender !== 'display' || !row) return "";
+                var rawNip = row.nip ? String(row.nip).replace(/[^a-zA-Z0-9]/g, '') : "";
+                var rawNama = (row.nama || "").replace(/'/g, "\\'");
+                
+                if (!window.isAdmin) {
+                    return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${rawNip}')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
+                }
+
+                return `
+                <div class="dropdown position-static">
+                  <button class="btn-action-dots" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport" title="Pilihan Tindakan Admin">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end action-dropdown-menu" style="z-index: 1055;">
+                    <li><div class="action-dropdown-header"><i class="fas fa-user-gear me-1"></i>Aksi Pegawai</div></li>
+                    <li><a class="action-dropdown-item item-edit" href="javascript:void(0)" onclick="bukaModalEdit('${rawNip}')"><i class="fas fa-pen-to-square"></i> <span>Edit Data Pegawai</span></a></li>
+                    <li><hr class="dropdown-divider my-1" style="border-color: #f1f5f9;"></li>
+                    <li><div class="action-dropdown-header"><i class="fas fa-clock-rotate-left me-1"></i>Update Status Pegawai</div></li>
+                    <li><a class="action-dropdown-item item-sementara" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pemberhentian Sementara', '${type}')"><i class="fas fa-pause-circle"></i> <span>Pemberhentian Sementara</span></a></li>
+                    <li><a class="action-dropdown-item item-tetap" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pemberhentian Tetap', '${type}')"><i class="fas fa-times-circle"></i> <span>Pemberhentian Tetap</span></a></li>
+                    <li><a class="action-dropdown-item item-pensiun" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pensiun', '${type}')"><i class="fas fa-user-clock"></i> <span>Pensiun</span></a></li>
+                    <li><a class="action-dropdown-item item-meninggal" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Meninggal Dunia', '${type}')"><i class="fas fa-dove"></i> <span>Meninggal Dunia</span></a></li>
+                  </ul>
+                </div>`;
             }
         });
 

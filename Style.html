@@ -86,10 +86,70 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
   #sidebar ul li a#menu-tambah:hover { background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: #fff !important; border-color: transparent; box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4); transform: translateY(-2px); }
 
   /* Box Indikator Orang Online */
-  .online-wrapper { flex: 0 0 auto; padding: 15px; margin: 10px 15px 20px 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
+  .online-wrapper { flex: 0 0 auto; padding: 15px; margin: 10px 15px 10px 15px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
   .online-wrapper::after { content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(to bottom right, rgba(255,255,255,0.1) 0%, transparent 50%, transparent 100%); transform: rotate(30deg); pointer-events: none; }
   .online-box { display: flex; align-items: center; font-size: 0.85rem; color: rgba(255,255,255,0.9); position: relative; z-index: 2; }
   .online-dot { width: 12px; height: 12px; background-color: #2ecc71; border-radius: 50%; margin-right: 15px; box-shadow: 0 0 10px rgba(46, 204, 113, 0.8); animation: pulse-green 2s infinite; flex-shrink: 0; }
+
+  /* Tombol & Mode Admin di Sidebar */
+  .admin-wrapper { margin: 0 15px 20px 15px; }
+  .btn-admin-access { width: 100%; padding: 9px 15px; border-radius: 12px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.18); color: #fff; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(6px); }
+  .btn-admin-access:hover { background: rgba(245, 158, 11, 0.2); border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25); }
+  .admin-active-card { padding: 8px 12px; border-radius: 12px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.12) 100%); border: 1px solid rgba(245, 158, 11, 0.4); display: flex; align-items: center; justify-content: space-between; color: #fff; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15); }
+  
+  /* Dropdown Aksi Titik Tiga (Desain Eksklusif & Jelas) */
+  .btn-action-dots { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; background: #ffffff; border: 1px solid #cbd5e1; color: #334155; transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+  .btn-action-dots:hover { background: #f8fafc; border-color: #94a3b8; color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+  
+  .action-dropdown-menu {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    padding: 8px !important;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16) !important;
+    background: #ffffff !important;
+    min-width: 235px !important;
+  }
+  .action-dropdown-header {
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.75px !important;
+    color: #64748b !important;
+    padding: 6px 12px 4px 12px !important;
+  }
+  .action-dropdown-item {
+    font-size: 0.83rem !important;
+    font-weight: 600 !important;
+    padding: 9px 12px !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+  }
+  .action-dropdown-item i {
+    font-size: 1rem !important;
+    width: 20px !important;
+    text-align: center !important;
+  }
+
+  /* Warna & Hover Tajam Khusus Tiap Item */
+  .action-dropdown-item.item-edit { color: #1e40af !important; background-color: transparent !important; }
+  .action-dropdown-item.item-edit:hover { background-color: #dbeafe !important; color: #1e3a8a !important; transform: translateX(3px) !important; }
+
+  .action-dropdown-item.item-sementara { color: #b45309 !important; background-color: transparent !important; }
+  .action-dropdown-item.item-sementara:hover { background-color: #fef3c7 !important; color: #92400e !important; transform: translateX(3px) !important; }
+
+  .action-dropdown-item.item-tetap { color: #dc2626 !important; background-color: transparent !important; }
+  .action-dropdown-item.item-tetap:hover { background-color: #fee2e2 !important; color: #991b1b !important; transform: translateX(3px) !important; }
+
+  .action-dropdown-item.item-pensiun { color: #0369a1 !important; background-color: transparent !important; }
+  .action-dropdown-item.item-pensiun:hover { background-color: #e0f2fe !important; color: #075985 !important; transform: translateX(3px) !important; }
+
+  .action-dropdown-item.item-meninggal { color: #334155 !important; background-color: transparent !important; }
+  .action-dropdown-item.item-meninggal:hover { background-color: #f1f5f9 !important; color: #0f172a !important; transform: translateX(3px) !important; }
 
   /* ---------------------------------------------------- */
   /* 3. TAMPILAN TABEL DATA PEJABAT                       */
@@ -108,7 +168,7 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
   .input-with-icon { padding-left: 38px !important; }
 
   /* Desain Card & Header Tabel Utama */
-  #page-data { height: 100%; width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+  #page-data { height: 100%; width: 100%; display: flex; flex-direction: column; }
   #page-data .main-card { 
       border: none !important; 
       border-radius: 0px !important; 
@@ -120,21 +180,39 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
       display: flex;
       flex-direction: column;
       flex: 1;
+      min-height: 520px;
   }
   .card-header-area { flex: 0 0 auto; margin-bottom: 15px; }
-  #page-data .dataTables_wrapper { display: flex; flex-direction: column; flex: 1; overflow: hidden; min-height: 0; }
-  .table-scroll-area { flex: 1; overflow: auto; width: 100%; }
+  #page-data .dataTables_wrapper { 
+      display: flex; 
+      flex-direction: column; 
+      flex: 1; 
+      min-height: 480px; 
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+      position: relative;
+  }
+  .table-scroll-area { 
+      flex: 1; 
+      overflow-x: auto; 
+      overflow-y: visible; 
+      min-height: 380px; 
+      width: 100%; 
+      padding-bottom: 120px; /* Ruang aman agar popup dropdown titik tiga leluasa dan tidak terpotong */
+  }
   
   #mainTable { width: 100% !important; border-collapse: separate; border-spacing: 0; margin-bottom: 0 !important; border: none !important; }
-  #mainTable thead th { position: sticky; top: 0; z-index: 50; background-color: #f8fafc !important; color: #64748b !important; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; border-top: none !important; border-left: none !important; border-right: none !important; border-bottom: 2px solid #e2e8f0 !important; padding: 16px 10px; white-space: nowrap; text-align: center !important; }
-  #mainTable thead th:first-child { border-top-left-radius: 12px; }
-  #mainTable thead th:last-child { border-top-right-radius: 12px; }
+  #mainTable thead th { position: sticky; top: 0; z-index: 20; background-color: #f8fafc !important; color: #64748b !important; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.5px; border-top: none !important; border-left: none !important; border-right: none !important; border-bottom: 2px solid #e2e8f0 !important; padding: 16px 10px; white-space: nowrap; text-align: center !important; }
+  #mainTable thead th:first-child { border-top-left-radius: 16px; }
+  #mainTable thead th:last-child { border-top-right-radius: 16px; }
   #mainTable tbody td { border-bottom: 1px solid #f1f5f9; border-top: none; padding: 12px 10px; color: #475569; vertical-align: middle; }
   #mainTable tbody tr { transition: all 0.2s ease; }
   #mainTable tbody tr:hover td { background-color: #f8faff !important; color: #2b6cb0 !important; }
 
   /* Desain Nomor Halaman (Paging) di Bawah Tabel */
-  .dt-footer-row { flex: 0 0 auto; background-color: #fff; z-index: 60; padding: 15px 20px; border-top: 1px solid #e2e8f0; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; margin: 0 !important; }
+  .dt-footer-row { flex: 0 0 auto; background-color: #fff; z-index: 10; padding: 15px 20px; border-top: 1px solid #e2e8f0; border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; margin: 0 !important; margin-top: auto !important; }
   .dataTables_wrapper .dataTables_paginate .pagination { gap: 6px; margin: 0; }
   .dataTables_wrapper .dataTables_paginate .page-item .page-link { border: none !important; border-radius: 8px !important; color: #64748b; font-weight: 600; font-size: 0.85rem; padding: 6px 14px; background: transparent; transition: all 0.2s ease; }
   .dataTables_wrapper .dataTables_paginate .page-item.active .page-link { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; color: #fff !important; box-shadow: 0 4px 12px rgba(102,126,234,0.35); }

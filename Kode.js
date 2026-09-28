@@ -11,31 +11,58 @@ function doGet() {
 }
 
 // =========================================================================
-// FUNGSI SETUP DATABASE OTOMATIS
+// FUNGSI SETUP DATABASE OTOMATIS (Disesuaikan dengan format spreadsheet referensi)
 // =========================================================================
 function setupDatabase() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  var headers = [
-    "NO", "NAMA", "NIP", "NO HP", "PANGKAT", "TMT PANGKAT", 
-    "JABATAN", "TMT JABATAN", "STATUS", "JENIS KELAMIN", "UNIT", 
-    "KABUPATEN/KOTA", "ASAL INSTANSI", "BIDANG", "TANGGAL LAHIR", 
-    "PENDIDIKAN TERAKHIR", "PROGRAM STUDI", "EMAIL", "DIKLAT PB", 
-    "PAK TERAKHIR", "ESELON", "SK PENGANGKATAN", "SK PANGKAT", 
-    "SK JABATAN", "UNGGAH PAK", "IJAZAH", "SERTIFIKAT DIKLAT"
+  var headersPNS = [
+    "NO", "NAMA", "NIP", "Gender", "ASAL INSTANSI", "STATUS PEGAWAI", 
+    "GOL. RUANG / PANGKAT", "TMT PANGKAT", "JABATAN", "TMT JABATAN", 
+    "STATUS", "KABUPATEN/KOTA", "UNIT KERJA", "BIDANG", "PENDIDIKAN TERAKHIR", 
+    "PROGRAM STUDI", "NO HP", "ALAMAT EMAIL AKTIF", "DIKLAT PB YANG TELAH DIIKUTI ", 
+    "PAK Terakhir", "Unggah SK Pengangkatan JF", "Unggah SK Pangkat Terakhir", 
+    "Unggah SK Jabatan Terakhir", "Unggah PAK Terakhir", "Unggah Ijazah Pendidikan Terakhir", 
+    "Unggah Sertifikat Diklat", "PERNYATAAN KEBENARAN DATA", "Unggah Sertifikat Diklat PB"
+  ];
+
+  var headersPPPK = [
+    "NO", "NAMA", "NIP", "GENDER", "ASAL INSTANSI", "STATUS PEGAWAI", 
+    "GOL. RUANG / PANGKAT", "TMT PANGKAT", "JABATAN", "TMT JABATAN", 
+    "STATUS", "KABUPATEN/KOTA", "UNIT KERJA", "BIDANG", "TANGGAL LAHIR", 
+    "PENDIDIKAN TERAKHIR", "PROGRAM STUDI", "NO HP", "ALAMAT EMAIL AKTIF", 
+    "DIKLAT PB YANG TELAH DIIKUTI ", "PAK Terakhir", "Unggah SK Pengangkatan JF", 
+    "Unggah SK Pangkat Terakhir", "Unggah SK Jabatan Terakhir", "Unggah PAK Terakhir", 
+    "Unggah Ijazah Pendidikan Terakhir", "Unggah Sertifikat Diklat", "PERNYATAAN KEBENARAN DATA", 
+    "Unggah Sertifikat Diklat PB"
   ];
   
   var daftarSheet = [
     {
       name: "Data_PNS",
-      dummy: [1, "Ahmad Hidayat, S.T.", "199001012020121001", "081234567890", "Penata Muda Tk. I (III/b)", "2022-04-01", "Penata Penanggulangan Bencana Ahli Muda", "2022-04-01", "Pusat", "Laki-laki", "Direktorat Kesiapsiagaan", "Jakarta Pusat", "BNPB", "Kesiapsiagaan", "1990-01-01", "S1", "Teknik Sipil", "ahmad@bnpb.go.id", "Sudah", 150, "-"]
+      headers: headersPNS,
+      dummy: [
+        1, "Agus Sulistiyono, S.E., M.Si", "197604052009121001", "Laki-laki", "BNPB", "PNS", 
+        "Pembina (IV/a)", "2022-04-01", "Analis Kebencanaan Ahli Madya", "2025-11-03", 
+        "Pusat", "Pusat", "Deputi Bidang Penanganan Darurat BNPB", "Direktorat Penanganan Darurat Wilayah III", 
+        "S2", "Manajemen Bencana", "081234567890", "agus.s@bnpb.go.id", "Sudah", 
+        "150", "", "", "", "", "", "", "YA", ""
+      ]
     },
     {
       name: "Data_PPPK",
-      dummy: [1, "Siti Rahma, S.Kom.", "199505052023212002", "081298765432", "Golongan X", "2023-01-01", "Pranata Komputer Ahli Pertama", "2023-01-01", "Daerah", "Perempuan", "Pusdatin", "Bandung", "BPBD Prov Jawa Barat", "Teknologi Informasi", "1995-05-05", "S1", "Informatika", "siti@bpbd.go.id", "Belum", "-", "-"]
+      headers: headersPPPK,
+      dummy: [
+        1, "Ade Sevrita Grace, S.Ars.", "200005012023212003", "Perempuan", "BNPB", "PPPK", 
+        "IX", "2023-01-01", "Analis Kebencanaan Ahli Pertama", "2023-01-01", 
+        "Pusat", "Pusat", "Pusat Pembinaan Jabatan Fungsional Kebencanaan BNPB", "-", "2000-05-01", 
+        "S1", "Arsitektur", "081298765432", "ade.grace@bnpb.go.id", "Sudah", 
+        "100", "", "", "", "", "", "", "YA", ""
+      ]
     },
     {
       name: "Data_Double",
+      headers: headersPNS,
       dummy: null
     }
   ];
@@ -46,15 +73,15 @@ function setupDatabase() {
       sheet = ss.insertSheet(item.name);
     }
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(headers);
-      sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#e9ecef");
+      sheet.appendRow(item.headers);
+      sheet.getRange(1, 1, 1, item.headers.length).setFontWeight("bold").setBackground("#e9ecef");
       if (item.dummy) {
         sheet.appendRow(item.dummy);
       }
     }
   });
 
-  return "Database berhasil diinisialisasi!";
+  return "Database berhasil disesuaikan dengan format spreadsheet referensi!";
 }
 
 
@@ -567,4 +594,75 @@ function getRekapKebutuhan() {
   bnpbInduk.st = bnpbInduk.it - bnpbInduk.bt;
 
   return [bnpbInduk].concat(anakBNPB).concat(dataBPBD);
+}
+
+// =========================================================================
+// FUNGSI 12: OTORISASI ADMIN & UPDATE STATUS KEPEGAWAIAN
+// =========================================================================
+var ADMIN_PASSWORD_PORTAL = "admin123"; // Password admin default (bisa diubah sesuai kebutuhan)
+
+function verifyAdminPassword(inputPassword) {
+  try {
+    if (!inputPassword) return { valid: false };
+    var isValid = (inputPassword.toString().trim() === ADMIN_PASSWORD_PORTAL);
+    return { valid: isValid };
+  } catch (e) {
+    return { valid: false, message: e.toString() };
+  }
+}
+
+function updateStatusPegawai(nip, type, statusBaru) {
+  try {
+    if (!nip || !statusBaru) throw new Error("Parameter NIP atau Status tidak lengkap.");
+    
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheetName = (type === 'PPPK') ? 'Data_PPPK' : 'Data_PNS';
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) throw new Error("Sheet '" + sheetName + "' tidak ditemukan.");
+
+    var lastRow = sheet.getLastRow();
+    var lastCol = sheet.getLastColumn();
+    if (lastRow < 2) throw new Error("Data di sheet kosong.");
+
+    var allData = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    var headers = allData[0].map(function(h) { return h.toString().toUpperCase().trim(); });
+
+    // Cari indeks kolom NIP
+    var idxNip = headers.findIndex(function(h) { return h === "NIP" || h === "NI PPPK" || h === "NRP" || h === "NIP / NRP"; });
+    if (idxNip === -1) throw new Error("Kolom NIP tidak ditemukan.");
+
+    // Cari indeks kolom Status Pegawai
+    var idxStatusPegawai = headers.findIndex(function(h) { return h === "STATUS PEGAWAI" || h === "STATUS_PEGAWAI"; });
+    if (idxStatusPegawai === -1) {
+      // Jika kolom status pegawai belum ada, gunakan kolom STATUS
+      idxStatusPegawai = headers.indexOf("STATUS");
+    }
+    if (idxStatusPegawai === -1) throw new Error("Kolom Status Pegawai tidak ditemukan.");
+
+    var nipCleanTarget = nip.toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    var targetRow = -1;
+
+    for (var r = 1; r < allData.length; r++) {
+      var rowNip = allData[r][idxNip] ? allData[r][idxNip].toString().replace(/[^a-zA-Z0-9]/g, '').toLowerCase() : "";
+      if (rowNip === nipCleanTarget) {
+        targetRow = r + 1; // 1-indexed baris spreadsheet
+        break;
+      }
+    }
+
+    if (targetRow === -1) throw new Error("Pegawai dengan NIP " + nip + " tidak ditemukan di database.");
+
+    // Tulis status baru ke spreadsheet
+    sheet.getRange(targetRow, idxStatusPegawai + 1).setValue(statusBaru);
+
+    return {
+      success: true,
+      message: "Status pegawai berhasil diperbarui menjadi: " + statusBaru
+    };
+  } catch (err) {
+    return {
+      success: false,
+      message: "Gagal memperbarui status: " + err.message
+    };
+  }
 }

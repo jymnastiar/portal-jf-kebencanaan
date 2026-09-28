@@ -73,6 +73,23 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
                         <div><strong id="live-user-count" style="font-size:1.1rem;">...</strong> Online<br><small style="opacity: 0.7; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Real-time Monitor</small></div>
                     </div>
                 </div>
+
+                <!-- TOMBOL / STATUS AKSES ADMIN -->
+                <div class="admin-wrapper mb-3" id="admin-sidebar-container">
+                    <button type="button" onclick="openAdminModal()" class="btn-admin-access" id="btn-admin-login">
+                        <i class="fas fa-user-shield text-warning"></i>
+                        <span>Akses Admin</span>
+                    </button>
+                    <div id="admin-badge-active" class="admin-active-card d-none">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fas fa-shield-alt text-warning"></i>
+                            <span class="fw-bold" style="font-size: 0.8rem;">Mode Admin</span>
+                        </div>
+                        <button type="button" onclick="adminLogout()" class="btn btn-sm btn-outline-light py-0 px-2 rounded-pill" style="font-size: 0.7rem;" title="Keluar Mode Admin">
+                            <i class="fas fa-sign-out-alt me-1"></i>Keluar
+                        </button>
+                    </div>
+                </div>
             </div>
         </nav>
         
@@ -350,6 +367,73 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
 
     <!-- Jendela Popup Form Edit Pegawai (Rumah bagi FormEdit.html) -->
     <div class="modal fade" id="modalEditAksi" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalEditLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);"><div id="konten-modal-edit"><div class="modal-body text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat formulir edit...</p></div></div></div></div></div>
+
+    <!-- Jendela Popup Login Admin -->
+    <div class="modal fade" id="adminLoginModal" tabindex="-1" aria-labelledby="adminLoginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content custom-modal-content">
+          <div class="modal-header custom-modal-header bg-light border-bottom">
+            <h6 class="modal-title custom-modal-title"><i class="fas fa-user-shield text-warning me-2"></i>Akses Administrator</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body custom-modal-body bg-white p-4">
+            <form id="formAdminLogin" onsubmit="handleAdminLogin(event)">
+              <div class="mb-3">
+                <label for="inputAdminPassword" class="form-label fw-bold text-dark" style="font-size: 0.8rem;">Password Admin</label>
+                <div class="input-group">
+                  <input type="password" id="inputAdminPassword" class="form-control" placeholder="Masukkan password admin..." required autocomplete="current-password" style="font-size: 0.85rem; border-radius: 8px 0 0 8px;">
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()" style="border-radius: 0 8px 8px 0;" title="Tampilkan/Sembunyikan Password">
+                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                  </button>
+                </div>
+                <div id="adminLoginError" class="text-danger small mt-2 d-none">
+                  <i class="fas fa-exclamation-circle me-1"></i>Password salah. Silakan coba lagi.
+                </div>
+              </div>
+              <button type="submit" id="btnSubmitAdminLogin" class="btn btn-warning w-100 text-white fw-bold shadow-sm rounded-pill py-2" style="font-size: 0.85rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+                <i class="fas fa-key me-2"></i>Masuk Mode Admin
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Jendela Popup Konfirmasi Perubahan Status Pegawai -->
+    <div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-labelledby="statusConfirmLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content custom-modal-content">
+          <div class="modal-header custom-modal-header bg-light border-bottom">
+            <h6 class="modal-title custom-modal-title" id="statusConfirmTitle"><i class="fas fa-user-edit text-primary me-2"></i>Konfirmasi Perubahan Status</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body custom-modal-body bg-white p-4">
+            <p class="text-dark mb-3">Apakah Anda yakin ingin memperbarui status kepegawaian berikut di database?</p>
+            <div class="p-3 rounded-3 border" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-medium" style="font-size: 0.8rem;">Nama Pegawai:</span>
+                <strong id="confirmPegawaiNama" class="text-dark text-end" style="font-size: 0.85rem;">-</strong>
+              </div>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-medium" style="font-size: 0.8rem;">NIP / NI PPPK:</span>
+                <span id="confirmPegawaiNip" class="fw-bold font-monospace px-2 py-1 rounded" style="font-size: 0.82rem; background: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1; letter-spacing: 0.5px;">-</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted fw-medium" style="font-size: 0.8rem;">Status Baru:</span>
+                <span id="confirmPegawaiStatusBaru" class="badge px-3 py-2 rounded-pill fw-bold" style="font-size: 0.82rem;">-</span>
+              </div>
+            </div>
+            <div id="statusUpdateAlert" class="mt-3 d-none"></div>
+          </div>
+          <div class="modal-footer custom-modal-footer">
+            <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Batal</button>
+            <button type="button" id="btnExecuteStatusChange" onclick="eksekusiUbahStatus()" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border: none;">
+              <i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ======================================================== -->
     <!-- 5. MENYUNTIKKAN FILE LOGIKA MESIN DAN FORMULIR KITA      -->

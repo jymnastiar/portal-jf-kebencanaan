@@ -4,69 +4,57 @@ const path = require('path');
 
 const PORT = 3000;
 
-// Data dummy lokal untuk simulasi
+// Data dummy lokal untuk simulasi (Disesuaikan dengan spreadsheet referensi)
 const dummyPNS = [
   {
-    nama: "Ahmad Hidayat, S.T.",
-    nip: "199001012020121001",
-    pangkat: "Penata Muda Tk. I (III/b)",
-    jabatan: "Penata Penanggulangan Bencana Ahli Muda",
+    nama: "Agus Sulistiyono, S.E., M.Si",
+    nip: "197604052009121001",
+    pangkat: "Pembina (IV/a)",
+    jabatan: "Analis Kebencanaan Ahli Madya",
     jenis_jabatan: "Pusat",
     jenis_kelamin: "Laki-laki",
-    unit_kerja: "Direktorat Kesiapsiagaan",
+    unit_kerja: "Deputi Bidang Penanganan Darurat BNPB",
     tmt_pangkat: "2022-04-01",
-    tmt_jabatan: "2022-04-01",
+    tmt_jabatan: "2025-11-03",
     eselon: "-"
   },
   {
-    nama: "Budi Santoso, M.Si.",
-    nip: "198503152010011003",
-    pangkat: "Penata Tk. I (III/d)",
+    nama: "Ali Rakhman, S.T., M.A.",
+    nip: "198208172009121001",
+    pangkat: "Pembina (IV/a)",
     jabatan: "Analis Kebencanaan Ahli Madya",
-    jenis_jabatan: "Daerah",
+    jenis_jabatan: "Pusat",
     jenis_kelamin: "Laki-laki",
-    unit_kerja: "BPBD Prov Jawa Barat",
-    tmt_pangkat: "2021-10-01",
-    tmt_jabatan: "2020-05-15",
+    unit_kerja: "Deputi Bidang Rehabilitasi dan Rekonstruksi BNPB",
+    tmt_pangkat: "2025-11-01",
+    tmt_jabatan: "2025-11-03",
     eselon: "-"
   },
   {
-    nama: "Dewi Lestari, S.Psi.",
-    nip: "199207202019032005",
-    pangkat: "Penata Muda (III/a)",
-    jabatan: "Penata Penanggulangan Bencana Ahli Pertama",
+    nama: "Dhelistya Liza, S.T., M.Sc.",
+    nip: "198209112009122001",
+    pangkat: "Pembina (IV/a)",
+    jabatan: "Analis Kebencanaan Ahli Madya",
     jenis_jabatan: "Pusat",
     jenis_kelamin: "Perempuan",
-    unit_kerja: "Direktorat Mitigasi Bencana",
-    tmt_pangkat: "2023-04-01",
-    tmt_jabatan: "2023-04-01",
+    unit_kerja: "Pusat Pembinaan Jabatan Fungsional Kebencanaan BNPB",
+    tmt_pangkat: "2026-01-01",
+    tmt_jabatan: "2025-12-01",
     eselon: "-"
   }
 ];
 
 const dummyPPPK = [
   {
-    nama: "Siti Rahma, S.Kom.",
-    nip: "199505052023212002",
-    pangkat: "Golongan X",
-    jabatan: "Pranata Komputer Ahli Pertama",
-    jenis_jabatan: "Daerah",
-    jenis_kelamin: "Perempuan",
-    unit_kerja: "BPBD Prov Jawa Barat",
-    tmt_pangkat: "2023-01-01",
-    tmt_jabatan: "2023-01-01",
-    eselon: "-"
-  },
-  {
-    nama: "Rian Pratama, S.Tr.Kom.",
-    nip: "199708122024211004",
-    pangkat: "Golongan IX",
+    nama: "Ade Sevrita Grace, S.Ars.",
+    nip: "200005012023212003",
+    pangkat: "IX",
     jabatan: "Analis Kebencanaan Ahli Pertama",
     jenis_jabatan: "Pusat",
-    jenis_kelamin: "Laki-laki",
-    unit_kerja: "Pusdatin BNPB",
-    tmt_pangkat: "2024-03-01",
-    tmt_jabatan: "2024-03-01",
+    jenis_kelamin: "Perempuan",
+    unit_kerja: "Pusat Pembinaan Jabatan Fungsional Kebencanaan BNPB",
+    tmt_pangkat: "2023-01-01",
+    tmt_jabatan: "2023-01-01",
     eselon: "-"
   }
 ];
@@ -156,6 +144,18 @@ function buildHtml() {
                     linkSertifikat: ""
                   });
                 }, 200);
+              } else if (prop === 'verifyAdminPassword') {
+                const inputPw = args[0];
+                setTimeout(() => onSuccess({ valid: inputPw === 'admin123' }), 150);
+              } else if (prop === 'updateStatusPegawai') {
+                const [nip, type, statusBaru] = args;
+                const targetList = (type === 'PPPK') ? dummyPPPK : dummyPNS;
+                const found = targetList.find(item => item.nip === nip);
+                if (found) {
+                  found.status_pegawai = statusBaru;
+                  found.jenis_jabatan = statusBaru;
+                }
+                setTimeout(() => onSuccess({ success: true, message: "Status berhasil diubah ke: " + statusBaru }), 250);
               } else if (prop === 'updateDataPegawaiMassal') {
                 setTimeout(() => onSuccess("SUKSES"), 200);
               } else if (prop === 'unggahFileMultiKomponen') {
