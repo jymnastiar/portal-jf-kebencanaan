@@ -94,7 +94,20 @@ function buildHtml() {
             
             // Tangani semua fungsi backend yang dipanggil frontend
             return function(...args) {
-              if (prop === 'getDashboardData') {
+              if (prop === 'getInitialAppData') {
+                setTimeout(() => {
+                  onSuccess({
+                    pns: dummyPNS,
+                    pppk: dummyPPPK,
+                    formasi: [
+                      { instansi: "BNPB PUSAT", isParent: true, b1: 10, i1: 8, b2: 15, i2: 12, b3: 5, i3: 4, bt: 30, it: 24, s1: -2, s2: -3, s3: -1, st: -6 },
+                      { instansi: "Pusat Pembinaan JF", isSubUnit: true, b1: 5, i1: 4, b2: 8, i2: 7, b3: 2, i3: 2, bt: 15, it: 13, s1: -1, s2: -1, s3: 0, st: -2 },
+                      { instansi: "BPBD Jawa Barat", isSubUnit: false, b1: 8, i1: 6, b2: 10, i2: 9, b3: 3, i3: 2, bt: 21, it: 17, s1: -2, s2: -1, s3: -1, st: -4 }
+                    ],
+                    stats: { pns: dummyPNS.length, pppk: dummyPPPK.length }
+                  });
+                }, 150);
+              } else if (prop === 'getDashboardData') {
                 setTimeout(() => onSuccess({ pns: dummyPNS.length, pppk: dummyPPPK.length }), 150);
               } else if (prop === 'getFormattedData') {
                 const type = args[0];

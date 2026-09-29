@@ -1,803 +1,1524 @@
 <!-- Bagian CSS -->
 <style>
-  .form-container-popup { padding: 10px; color: #333; font-family: 'Poppins', sans-serif; }
-  .form-container-popup .form-group { margin-bottom: 16px; }
-  .form-container-popup .row-flex { display: flex; gap: 15px; }
-  .form-container-popup .row-flex .form-group { flex: 1; }
-  .form-container-popup label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; color: #4a5568; }
-  
-  .form-container-popup input[type="text"], 
-  .form-container-popup input[type="email"], 
-  .form-container-popup input[type="date"], 
-  .form-container-popup select, 
-  .form-container-popup input[type="file"] { 
-    width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; font-size: 13px; 
+  .form-container-popup {
+    padding: 10px;
+    color: #333;
+    font-family: "Poppins", sans-serif;
   }
-  
-  .form-container-popup input:disabled, 
-  .form-container-popup select:disabled, 
-  .form-container-popup input[type="file"]:disabled { 
-    background-color: #f1f5f9; color: #64748b; cursor: not-allowed; 
+  .form-container-popup .form-group {
+    margin-bottom: 16px;
   }
-  
-  .form-container-popup button { padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; font-size: 13px; transition: all 0.2s; }
-  .form-container-popup .btn-cari { background-color: #4b3869; color: white; border: none; padding: 9px 18px; }
-  .form-container-popup .btn-cari:hover { background-color: #667eea; }
-  .form-container-popup .btn-save { background-color: #2ecc71; color: white; border: none; }
-  .form-container-popup .btn-save:hover { background-color: #27ae60; }
-  .form-container-popup .btn-edit { background-color: #3498db; color: white; border: none; }
-  .form-container-popup .btn-edit:hover { background-color: #2980b9; }
-  
-  .form-container-popup #status { margin-top: 15px; font-weight: bold; color: #2980b9; font-size: 13px; background: #e2e8f0; padding: 10px; border-radius: 5px; display: none; }
-  .form-container-popup .badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; color: white; font-weight: bold; display: inline-block; margin-left: 10px; }
-  .form-container-popup .badge-pns { background-color: #f39c12; }
-  .form-container-popup .badge-pppk { background-color: #2ecc71; }
-  .form-container-popup .file-status-link { font-size: 12px; margin-top: 5px; display: block; text-decoration: none; color: #3498db; font-weight: 500; }
-  .form-container-popup .file-status-link:hover { text-decoration: underline; }
-  .form-container-popup .section-title { font-size: 14px; font-weight: bold; color: #4b3869; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; }
-  .form-container-popup hr { border: 0; height: 1px; background: #e2e8f0; margin: 20px 0; }
+  .form-container-popup .row-flex {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+  .form-container-popup .row-flex .form-group {
+    flex: 1;
+    min-width: 240px;
+  }
+  .form-container-popup label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #4a5568;
+  }
+
+  .form-container-popup input[type="text"],
+  .form-container-popup input[type="password"],
+  .form-container-popup input[type="email"],
+  .form-container-popup input[type="date"],
+  .form-container-popup select,
+  .form-container-popup input[type="file"] {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+
+  .form-container-popup input:disabled,
+  .form-container-popup select:disabled,
+  .form-container-popup input[type="file"]:disabled {
+    background-color: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+  }
+
+  .form-container-popup button {
+    padding: 10px 20px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .form-container-popup .btn-cari {
+    background-color: #4b3869;
+    color: white;
+    border: none;
+    padding: 9px 18px;
+  }
+  .form-container-popup .btn-cari:hover {
+    background-color: #667eea;
+  }
+  .form-container-popup .btn-save {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+  }
+  .form-container-popup .btn-save:hover {
+    background-color: #27ae60;
+  }
+  .form-container-popup .btn-edit {
+    background-color: #3498db;
+    color: white;
+    border: none;
+  }
+  .form-container-popup .btn-edit:hover {
+    background-color: #2980b9;
+  }
+
+  .form-container-popup #status {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #2980b9;
+    font-size: 13px;
+    background: #e2e8f0;
+    padding: 10px;
+    border-radius: 5px;
+    display: none;
+  }
+  .form-container-popup .badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: white;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 10px;
+  }
+  .form-container-popup .badge-pns {
+    background-color: #f39c12;
+  }
+  .form-container-popup .badge-pppk {
+    background-color: #2ecc71;
+  }
+  .form-container-popup .file-info-box {
+    margin-top: 6px;
+    font-size: 12px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    padding: 6px 10px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .form-container-popup .section-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #4b3869;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin-top: 25px;
+    margin-bottom: 15px;
+  }
+  .form-container-popup hr {
+    border: 0;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 20px 0;
+  }
+  .form-container-popup .row-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
 </style>
 
-<!-- 2. Header Pop-up Modal (Desain Gradien Ungu Khas Anda) -->
-<div class="modal-header" style="background: linear-gradient(145deg, #4b3869 0%, #667eea 100%); color: white;">
-  <h5 class="modal-title fw-bold" style="font-size: 1.1rem;"><i class="fa-solid fa-user-gear me-2"></i>Edit Data JF</h5>
-  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Header Pop-up Modal -->
+<div
+  class="modal-header"
+  style="
+    background: linear-gradient(145deg, #4b3869 0%, #667eea 100%);
+    color: white;
+  "
+>
+  <h5 class="modal-title fw-bold" style="font-size: 1.1rem">
+    <i class="fa-solid fa-user-gear me-2"></i>Edit Data JF
+  </h5>
+  <button
+    type="button"
+    class="btn-close btn-close-white"
+    data-bs-dismiss="modal"
+    aria-label="Close"
+  ></button>
 </div>
 
-<!-- 3. Konten Utama Form -->
-<div class="modal-body form-container-popup" style="max-height: 70vh; overflow-y: auto;">
-  
-  <!-- Desain Box Pencarian Ganda (Kembali ke Bentuk Awal Anda) -->
-  <div style="background: #f1f5f9; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
-    <p style="margin-top:0; margin-bottom:10px; font-weight:bold; color:#4b3869;">
+<!-- Konten Utama Form -->
+<div
+  class="modal-body form-container-popup"
+  style="max-height: 75vh; overflow-y: auto"
+>
+  <!-- Box Pencarian Ganda (Selalu Tampil di Awal) -->
+  <div
+    style="
+      background: #f1f5f9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    "
+  >
+    <p
+      style="
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #4b3869;
+      "
+    >
       Verifikasi Data Pegawai :
     </p>
-    <div class="row-flex" style="align-items: flex-end;">
-      <div class="form-group" style="margin-bottom: 0;">
+    <div class="row-flex" style="align-items: flex-end">
+      <div class="form-group" style="margin-bottom: 0">
         <label>Masukkan NIP :</label>
-        <input type="text" id="cariNip" placeholder="Contoh: 199501...">
+        <input type="text" id="cariNip" placeholder="Contoh: 199501..." />
       </div>
-      <div class="form-group" style="margin-bottom: 0;">
+      <div class="form-group" style="margin-bottom: 0">
         <label>Kata Sandi :</label>
-        <input type="text" id="cariNoHp" placeholder="sandi...">
+        <input type="password" id="cariNoHp" placeholder="sandi..." />
       </div>
-      <div style="margin-bottom: 0;">
-        <!-- KOREKSI: onclick dikembalikan murni ke fungsi aslinya dan tag ditutup rapat -->
-        <button type="button" class="btn-cari" style="height: 38px; padding: 0 20px;" onclick="cariDataPegawaiGabungan()">
+      <div style="margin-bottom: 0">
+        <button
+          type="button"
+          class="btn-cari"
+          style="height: 38px; padding: 0 20px"
+          onclick="cariDataPegawaiGabungan()"
+        >
           Cari Data
         </button>
       </div>
     </div>
   </div>
-  
-  <hr>
+
+  <!-- KOTAK INFO LUPA PASSWORD (SEPERTI PADA GAMBAR) -->
+  <div
+    style="
+      background-color: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-left: 4px solid #be123c;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    "
+  >
+    <div
+      style="
+        color: #be123c;
+        font-size: 12.5px;
+        font-weight: 500;
+        margin-bottom: 10px;
+      "
+    >
+      <i class="fas fa-exclamation-circle me-1"></i> Silahkan hubungi admin jika
+      anda lupa kata sandi anda, dengan menekan tombol <b>'contact center'</b>
+    </div>
+    <button
+      type="button"
+      onclick="bukaContactCenterDariEdit()"
+      style="
+        background-color: #10b981;
+        color: white;
+        border: none;
+        padding: 7px 16px;
+        border-radius: 50px;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+      "
+    >
+      <i class="fab fa-whatsapp me-2" style="font-size: 14px"></i> Buka Contact
+      Center
+    </button>
+  </div>
+
+  <!-- KOTAK NOTIFIKASI STATUS -->
+  <div id="status"></div>
+
+  <!-- PESAN AWAL SEBELUM VERIFIKASI NIP & KATA SANDI -->
+  <div
+    id="pesanBelumVerifikasi"
+    style="
+      text-align: center;
+      padding: 25px 15px;
+      color: #64748b;
+      background: #f8fafc;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      margin-top: 10px;
+    "
+  >
+    <i
+      class="fas fa-lock"
+      style="
+        font-size: 24px;
+        color: #94a3b8;
+        margin-bottom: 8px;
+        display: block;
+      "
+    ></i>
+    Silakan masukkan <b>NIP</b> dan <b>Kata Sandi</b> di atas lalu klik
+    <b>Cari Data</b>.<br />
+    <small
+      >Formulir data dan kolom unggah dokumen (<b>PNS: 8 File</b> /
+      <b>PPPK: 3 File</b>) akan muncul otomatis setelah terverifikasi.</small
+    >
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- BOX KHUSUS LOGIN PERTAMA: WAJIB UBAH KATA SANDI TERLEBIH DAHULU       -->
+  <!-- ===================================================================== -->
+  <div
+    id="areaGantiSandiPertama"
+    style="
+      display: none;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-left: 5px solid #f59e0b;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 15px;
+    "
+  >
+    <h6
+      style="margin-top: 0; color: #b45309; font-weight: 700; font-size: 14px"
+    >
+      <i class="fas fa-shield-alt me-2"></i>Aktivasi Keamanan Akun (Login
+      Pertama Kali)
+    </h6>
+    <p style="font-size: 12.5px; color: #78350f; margin-bottom: 15px">
+      Halo <b id="namaSambutanSandi">-</b>, karena Anda baru pertama kali
+      mengakses fitur Edit Data, silakan buat <b>Kata Sandi Baru</b> terlebih
+      dahulu untuk mengamankan data dan dokumen pribadi Anda. Untuk akses
+      berikutnya, gunakan Kata Sandi Baru ini.
+    </p>
+    <div class="row-flex">
+      <div class="form-group" style="margin-bottom: 10px">
+        <label style="color: #78350f"
+          >Kata Sandi Baru (Min. 6 Karakter) :</label
+        >
+        <input
+          type="password"
+          id="inputSandiBaru"
+          placeholder="Buat kata sandi baru..."
+        />
+      </div>
+      <div class="form-group" style="margin-bottom: 10px">
+        <label style="color: #78350f">Konfirmasi Kata Sandi Baru :</label>
+        <input
+          type="password"
+          id="inputKonfirmasiSandiBaru"
+          placeholder="Ulangi kata sandi baru..."
+        />
+      </div>
+    </div>
+    <button
+      type="button"
+      class="btn-save"
+      id="btnSimpanSandiBaru"
+      onclick="prosesAktifkanSandiBaru()"
+      style="margin-top: 5px"
+    >
+      <i class="fas fa-key me-1"></i> Aktifkan Sandi & Buka Data Saya
+    </button>
+  </div>
 
   <!-- Form Tracker Internal -->
-  <input type="hidden" id="noBaris">
-  <input type="hidden" id="namaSheet"> 
-  
-  <div class="form-group" style="display: flex; align-items: center; margin-bottom: 20px;">
-    <label style="margin-bottom: 0; font-weight: bold;">Status Pegawai Saat Ini: </label>
-    <div id="statusPegawai" style="display: inline-block;">
-      <span class="badge" style="background:#94a3b8;">Belum Cari</span>
+  <input type="hidden" id="noBaris" />
+  <input type="hidden" id="namaSheet" />
+
+  <!-- ===================================================================== -->
+  <!-- PEMBUNGKUS AREA ISIAN (TERSEMBUNYI SAMPAI SANDI AKTIF & TERVERIFIKASI)-->
+  <!-- ===================================================================== -->
+  <div id="areaIsianPegawai" style="display: none">
+    <hr />
+
+    <!-- Baris Status Pegawai + Tombol Ganti Password Setelah Halaman Data Dibuka -->
+    <div
+      class="form-group"
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 15px;
+      "
+    >
+      <div style="display: flex; align-items: center">
+        <label style="margin-bottom: 0; font-weight: bold"
+          >Status Pegawai Saat Ini:
+        </label>
+        <div id="statusPegawai" style="display: inline-block">
+          <span class="badge" style="background: #94a3b8">Belum Cari</span>
+        </div>
+      </div>
+
+      <!-- Tombol Ganti Password Baru -->
+      <button
+        type="button"
+        onclick="bukaFormGantiSandi()"
+        style="
+          background: #f59e0b;
+          color: white;
+          border: none;
+          padding: 6px 14px;
+          font-size: 12px;
+          border-radius: 6px;
+          font-weight: bold;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        "
+      >
+        <i class="fas fa-key me-1"></i>Ganti Password
+      </button>
+    </div>
+
+    <!-- Jendela Kecil Ganti Password (Aktif Saat Tombol Diklik) -->
+    <div
+      id="areaGantiSandiAktif"
+      style="
+        display: none;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-left: 4px solid #f59e0b;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+      "
+    >
+      <h6
+        style="margin-top: 0; color: #b45309; font-weight: 700; font-size: 13px"
+      >
+        <i class="fas fa-user-lock me-2"></i>Ganti Kata Sandi
+      </h6>
+      <div class="row-flex">
+        <div class="form-group" style="margin-bottom: 10px">
+          <label style="color: #78350f"
+            >Kata Sandi Baru (Min. 6 Karakter) :</label
+          >
+          <input
+            type="password"
+            id="inputUbahSandiBaru"
+            placeholder="Ketik kata sandi baru..."
+          />
+        </div>
+        <div class="form-group" style="margin-bottom: 10px">
+          <label style="color: #78350f">Konfirmasi Kata Sandi Baru :</label>
+          <input
+            type="password"
+            id="inputUbahKonfirmasiSandi"
+            placeholder="Ulangi kata sandi baru..."
+          />
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 5px">
+        <button
+          type="button"
+          onclick="prosesGantiSandiAktif()"
+          style="
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 12px;
+          "
+        >
+          Simpan Password Baru
+        </button>
+        <button
+          type="button"
+          onclick="batalGantiSandi()"
+          style="
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 12px;
+          "
+        >
+          Batal
+        </button>
+      </div>
+    </div>
+
+    <!-- SECTION A: IDENTITAS UTAMA & WILAYAH -->
+    <div class="section-title">A. Identitas Utama & Wilayah</div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>NIP (Tidak dapat diubah):</label>
+        <input type="text" id="nipData" disabled />
+      </div>
+      <div class="form-group">
+        <label>Nama Pegawai:</label>
+        <input type="text" id="namaData" disabled />
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Wilayah Kerja (Tidak dapat diubah):</label>
+        <input type="text" id="wilayahKerjaData" disabled />
+      </div>
+      <div class="form-group">
+        <label>Kabupaten / Kota (Tidak dapat diubah):</label>
+        <input type="text" id="kabupatenKotaData" disabled />
+      </div>
+    </div>
+
+    <!-- SECTION B: JABATAN & INSTANSI -->
+    <div class="section-title">B. Kepangkatan, Jabatan & Instansi</div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Pangkat / Golongan :</label>
+        <select id="pangkatData" disabled>
+          <option value="">-- Pilih Pangkat --</option>
+          <option value="Pembina Utama (IV/e)">Pembina Utama (IV/e)</option>
+          <option value="Pembina Utama Madya (IV/d)">
+            Pembina Utama Madya (IV/d)
+          </option>
+          <option value="Pembina Utama Muda (IV/c)">
+            Pembina Utama Muda (IV/c)
+          </option>
+          <option value="Pembina Tingkat I (IV/b)">
+            Pembina Tingkat I (IV/b)
+          </option>
+          <option value="Pembina (IV/a)">Pembina (IV/a)</option>
+          <option value="Penata Tingkat I (III/d)">
+            Penata Tingkat I (III/d)
+          </option>
+          <option value="Penata (III/c)">Penata (III/c)</option>
+          <option value="Penata Muda Tingkat I (III/b)">
+            Penata Muda Tingkat I (III/b)
+          </option>
+          <option value="Penata Muda (III/a)">Penata Muda (III/a)</option>
+          <option value="Pengatur Tingkat I (II/d)">
+            Pengatur Tingkat I (II/d)
+          </option>
+          <option value="Pengatur (II/c)">Pengatur (II/c)</option>
+          <option value="Pengatur Muda Tingkat I (II/b)">
+            Pengatur Muda Tingkat I (II/b)
+          </option>
+          <option value="Pengatur Muda (II/a)">Pengatur Muda (II/a)</option>
+          <option value="XI">XI</option>
+          <option value="X">X</option>
+          <option value="IX">IX</option>
+          <option value="VIII">VIII</option>
+          <option value="VII">VII</option>
+          <option value="VI">VI</option>
+          <option value="V">V</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>TMT Pangkat :</label>
+        <input type="date" id="tmtPangkatData" disabled />
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Jabatan :</label>
+        <select id="jabatanData" disabled>
+          <option value="">-- Pilih Jabatan --</option>
+          <option value="Analis Kebencanaan Ahli Utama">
+            Analis Kebencanaan Ahli Utama
+          </option>
+          <option value="Analis Kebencanaan Ahli Madya">
+            Analis Kebencanaan Ahli Madya
+          </option>
+          <option value="Analis Kebencanaan Ahli Muda">
+            Analis Kebencanaan Ahli Muda
+          </option>
+          <option value="Analis Kebencanaan Ahli Pertama">
+            Analis Kebencanaan Ahli Pertama
+          </option>
+          <option value="Pranata Kebencanaan Penyelia">
+            Pranata Kebencanaan Penyelia
+          </option>
+          <option value="Pranata Kebencanaan Mahir">
+            Pranata Kebencanaan Mahir
+          </option>
+          <option value="Pranata Kebencanaan Terampil">
+            Pranata Kebencanaan Terampil
+          </option>
+          <option value="Pranata Kebencanaan Pemula">
+            Pranata Kebencanaan Pemula
+          </option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>TMT Jabatan :</label>
+        <input type="date" id="tmtJabatanData" disabled />
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Asal Instansi:</label>
+        <select id="asalInstansiData" disabled>
+          <option value="">-- Pilih Instansi --</option>
+          <option value="BNPB">BNPB</option>
+          <option value="BPBD Provinsi">BPBD Provinsi</option>
+          <option value="BPBD Kabupaten">BPBD Kabupaten</option>
+          <option value="BPBD Kota">BPBD Kota</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unit Kerja (Tidak dapat diubah):</label>
+        <input type="text" id="unitKerjaData" disabled />
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Bidang Kerja :</label>
+        <input type="text" id="bidangKerjaData" disabled />
+      </div>
+      <div class="form-group">
+        <label>Tanggal Lahir :</label>
+        <input type="date" id="tanggalLahirData" disabled />
+      </div>
+    </div>
+
+    <!-- SECTION C: PENDIDIKAN & KONTAK -->
+    <div class="section-title">C. Pendidikan & Kontak Aktif</div>
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Pendidikan Terakhir :</label>
+        <input
+          type="text"
+          id="pendidikanData"
+          placeholder="Contoh: S1 / S2 / D4"
+          disabled
+        />
+      </div>
+      <div class="form-group">
+        <label>Program Studi :</label>
+        <input
+          type="text"
+          id="prodiData"
+          placeholder="Contoh: Teknik Sipil"
+          disabled
+        />
+      </div>
+    </div>
+
+    <div class="row-flex">
+      <div class="form-group">
+        <label>No HP / WhatsApp Aktif :</label>
+        <input type="text" id="noHpData" disabled />
+      </div>
+      <div class="form-group">
+        <label>Email Aktif :</label>
+        <input
+          type="email"
+          id="emailData"
+          placeholder="Contoh: nama@email.com"
+          disabled
+        />
+      </div>
+    </div>
+
+    <!-- SECTION D: RIWAYAT KOMPETENSI -->
+    <div class="section-title">D. Riwayat Kompetensi & Angka Kredit</div>
+    <div class="row-flex">
+      <div class="form-group">
+        <label>Diklat yang Pernah Diikuti :</label>
+        <input type="text" id="diklatData" disabled />
+      </div>
+      <div class="form-group">
+        <label>PAK (Penilaian Angka Kredit) Terakhir :</label>
+        <input type="text" id="pakTerakhirData" disabled />
+      </div>
+    </div>
+
+    <!-- SECTION E: UNGGAH DOKUMEN (OTOMATIS PNS 8 FILE / PPPK 3 FILE, PDF MAKS 1 MB) -->
+    <div class="section-title" id="judulSectionDokumen">
+      E. Unggah Dokumen Pendukung (Wajib PDF, Maks. 1 MB)
+    </div>
+    <div
+      style="
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #1e40af;
+        margin-bottom: 15px;
+      "
+    >
+      <i class="fas fa-info-circle me-1"></i> Format dokumen wajib
+      <b>.PDF</b> dengan ukuran maksimal <b>1 MB</b> per file.
+    </div>
+
+    <div class="row-flex" id="wadahDokumen">
+      <!-- 1. SK CPNS (Khusus PNS) -->
+      <div class="form-group item-dok dok-pns">
+        <label id="lblSkCpns">1. Unggah SK CPNS :</label>
+        <input
+          type="file"
+          id="fileSkCpns"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusSkCpns')"
+          disabled
+        />
+        <div id="statusSkCpns" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 2. SK Pengangkatan dalam JF (PNS) / 1. SK Pengangkatan PPPK (PPPK) -->
+      <div class="form-group item-dok dok-pns dok-pppk">
+        <label id="lblSkPengangkatan"
+          >2. Unggah SK Pengangkatan dalam JF :</label
+        >
+        <input
+          type="file"
+          id="fileSkPengangkatan"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusSkPengangkatan')"
+          disabled
+        />
+        <div id="statusSkPengangkatan" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 3. SK Golongan Pangkat Akhir (Khusus PNS) -->
+      <div class="form-group item-dok dok-pns">
+        <label id="lblSkPangkat">3. Unggah SK Golongan Pangkat Akhir :</label>
+        <input
+          type="file"
+          id="fileSkPangkat"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusSkPangkat')"
+          disabled
+        />
+        <div id="statusSkPangkat" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 4. SK Jabatan Terakhir (Khusus PNS) -->
+      <div class="form-group item-dok dok-pns">
+        <label id="lblSkJabatan">4. Unggah SK Jabatan Terakhir :</label>
+        <input
+          type="file"
+          id="fileSkJabatan"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusSkJabatan')"
+          disabled
+        />
+        <div id="statusSkJabatan" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 5. PAK Terakhir (Khusus PNS) -->
+      <div class="form-group item-dok dok-pns">
+        <label id="lblPak">5. Unggah PAK Terakhir :</label>
+        <input
+          type="file"
+          id="filePak"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusPak')"
+          disabled
+        />
+        <div id="statusPak" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 6. Ijazah Pendidikan Terakhir (PNS & PPPK) -->
+      <div class="form-group item-dok dok-pns dok-pppk">
+        <label id="lblIjazah">6. Unggah Ijazah Pendidikan Terakhir :</label>
+        <input
+          type="file"
+          id="fileIjazah"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusIjazah')"
+          disabled
+        />
+        <div id="statusIjazah" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 7. Sertifikat Diklat PB (PNS & PPPK) -->
+      <div class="form-group item-dok dok-pns dok-pppk">
+        <label id="lblSertifikat">7. Unggah Sertifikat Diklat PB :</label>
+        <input
+          type="file"
+          id="fileSertifikat"
+          accept="application/pdf,.pdf"
+          onchange="validasiDanTampilkanFile(this, 'statusSertifikat')"
+          disabled
+        />
+        <div id="statusSertifikat" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+
+      <!-- 8. Sertifikat Kompetensi JF (Khusus PNS) -->
+      <div class="form-group item-dok dok-pns">
+        <label id="lblSertifikatKompetensi"
+          >8. Unggah Sertifikat Kompetensi JF :</label
+        >
+        <input
+          type="file"
+          id="fileSertifikatKompetensi"
+          accept="application/pdf,.pdf"
+          onchange="
+            validasiDanTampilkanFile(this, 'statusSertifikatKompetensi')
+          "
+          disabled
+        />
+        <div id="statusSertifikatKompetensi" class="file-info-box">
+          <span style="color: #94a3b8">Belum ada berkas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOMBOL AKSI UTAMA -->
+    <div class="row-buttons">
+      <button
+        type="button"
+        class="btn-edit"
+        id="btnSesiEdit"
+        onclick="aktifkanModeEdit()"
+        disabled
+      >
+        Buka Kunci Edit
+      </button>
+      <button
+        type="button"
+        class="btn-save"
+        id="btnSesiSimpan"
+        onclick="simpanPerubahan()"
+        disabled
+      >
+        Simpan Perubahan
+      </button>
     </div>
   </div>
-
-  <!-- SECTION I: IDENTITAS UTAMA & WILAYAH -->
-  <div class="section-title">A. Identitas Utama & Wilayah</div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>NIP (Tidak dapat diubah):</label>
-      <input type="text" id="nipData" disabled>
-    </div>
-    <div class="form-group">
-      <label>Nama Pegawai:</label>
-      <input type="text" id="namaData" disabled>
-    </div>
-  </div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>Wilayah Kerja (Tidak dapat diubah):</label>
-      <input type="text" id="wilayahKerjaData" disabled>
-    </div>
-    <div class="form-group">
-      <label>Kabupaten / Kota (Tidak dapat diubah):</label>
-      <input type="text" id="kabupatenKotaData" disabled>
-    </div>
-  </div>
-
-  <!-- SECTION II: JABATAN & INSTANSI -->
-  <div class="section-title">B. Kepangkatan, Jabatan & Instansi</div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>Pangkat / Golongan :</label>
-      <select id="pangkatData" disabled>
-        <option value="">-- Pilih Pangkat --</option>
-        <option value="Pembina Utama (IV/e)">Pembina Utama (IV/e)</option>
-        <option value="Pembina Utama Madya (IV/d)">Pembina Utama Madya (IV/d)</option>
-        <option value="Pembina Utama Muda (IV/c)">Pembina Utama Muda (IV/c)</option>
-        <option value="Pembina Tingkat I (IV/b)">Pembina Tingkat I (IV/b)</option>
-        <option value="Pembina (IV/a)">Pembina (IV/a)</option>
-        <option value="Penata Tingkat I (III/d)">Penata Tingkat I (III/d)</option>
-        <option value="Penata (III/c)">Penata (III/c)</option>
-        <option value="Penata Muda Tingkat I (III/b)">Penata Muda Tingkat I (III/b)</option>
-        <option value="Penata Muda (III/a)">Penata Muda (III/a)</option>
-        <option value="Pengatur Tingkat I (II/d)">Pengatur Tingkat I (II/d)</option>
-        <option value="Pengatur (II/c)">Pengatur (II/c)</option>
-        <option value="Pengatur Muda Tingkat I (II/b)">Pengatur Muda Tingkat I (II/b)</option>
-        <option value="Pengatur Muda (II/a)">Pengatur Muda (II/a)</option>
-        <option value="XI">XI</option>
-        <option value="X">X</option>
-        <option value="IX">IX</option>
-        <option value="VIII">VIII</option>
-        <option value="VII">VII</option>
-        <option value="VI">VI</option>
-        <option value="V">V</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>TMT Pangkat :</label>
-      <input type="date" id="tmtPangkatData" disabled>
-    </div>
-  </div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>Jabatan :</label>
-      <select id="jabatanData" disabled>
-        <option value="">-- Pilih Jabatan --</option>
-        <option value="Analis Kebencanaan Ahli Utama">Analis Kebencanaan Ahli Utama</option>
-        <option value="Analis Kebencanaan Ahli Madya">Analis Kebencanaan Ahli Madya</option>
-        <option value="Analis Kebencanaan Ahli Muda">Analis Kebencanaan Ahli Muda</option>
-        <option value="Analis Kebencanaan Ahli Pertama">Analis Kebencanaan Ahli Pertama</option>
-        <option value="Pranata Kebencanaan Penyelia">Pranata Kebencanaan Penyelia</option>
-        <option value="Pranata Kebencanaan Mahir">Pranata Kebencanaan Mahir</option>
-        <option value="Pranata Kebencanaan Terampil">Pranata Kebencanaan Terampil</option>
-        <option value="Pranata Kebencanaan Pemula">Pranata Kebencanaan Pemula</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>TMT Jabatan :</label>
-      <input type="date" id="tmtJabatanData" disabled>
-    </div>
-  </div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>Asal Instansi:</label>
-      <select id="asalInstansiData" disabled>
-        <option value="">-- Pilih Instansi --</option>
-        <option value="BNPB">BNPB</option>
-        <option value="BPBD Provinsi">BPBD Provinsi</option>
-        <option value="BPBD Kabupaten">BPBD Kabupaten</option>
-        <option value="BPBD Kota">BPBD Kota</option>
-        <option value="Lainnya">Lainnya</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Unit Kerja (Tidak dapat diubah):</label>
-      <input type="text" id="unitKerjaData" disabled>
-    </div>
-  </div>
-
-  <div class="row-flex">
-    <div class="form-group">
-      <label>Bidang Kerja :</label>
-      <input type="text" id="bidangKerjaData" disabled>
-    </div>
-    <div class="form-group">
-      <label>Tanggal Lahir :</label>
-      <input type="date" id="tanggalLahirData" disabled>
-    </div>
-  </div>
-
-<!-- SECTION III: PENDIDIKAN & KONTAK -->
-<div class="section-title">C. Pendidikan & Kontak Aktif</div>
-<div class="row-flex">
-  <div class="form-group">
-    <label>Pendidikan Terakhir :</label>
-    <input type="text" id="pendidikanData" placeholder="Contoh: S1 / S2 / D4" disabled>
-  </div>
-  <div class="form-group">
-    <label>Program Studi :</label>
-    <input type="text" id="prodiData" placeholder="Contoh: Teknik Sipil" disabled>
-  </div>
+  <!-- Penutup #areaIsianPegawai -->
 </div>
-
-<div class="row-flex">
-  <div class="form-group">
-    <label>No HP / WhatsApp Aktif :</label>
-    <input type="text" id="noHpData" disabled>
-  </div>
-  <div class="form-group">
-    <label>Email Aktif :</label>
-    <input type="email" id="emailData" placeholder="Contoh: nama@email.com" disabled>
-  </div>
-</div>
-
-<!-- SECTION IV: RIWAYAT KOMPETENSI -->
-<div class="section-title">D. Riwayat Kompetensi & Angka Kredit</div>
-<div class="row-flex">
-  <div class="form-group">
-    <label>Diklat yang Pernah Diikuti :</label>
-    <input type="text" id="diklatData" disabled>
-  </div>
-  <div class="form-group">
-    <label>PAK (Penilaian Angka Kredit) Terakhir :</label>
-    <input type="text" id="pakTerakhirData" disabled>
-  </div>
-</div>
-
-<!-- SECTION V: UNGGAH DOKUMEN -->
-<div class="section-title">E. Unggah Dokumen Pendukung (Format PDF/Gambar)</div>
-<div class="row-flex">
-  <div class="form-group">
-    <label>Unggah SK Pengangkatan :</label>
-    <input type="file" id="fileSkPengangkatan" disabled>
-    <span id="statusSkPengangkatan"></span>
-  </div>
-  <div class="form-group">
-    <label>Unggah SK Pangkat Terakhir :</label>
-    <input type="file" id="fileSkPangkat" disabled>
-    <span id="statusSkPangkat"></span>
-  </div>
-</div>
-
-<div class="row-flex">
-  <div class="form-group">
-    <label>Unggah SK Jabatan Terakhir :</label>
-    <input type="file" id="fileSkJabatan" disabled>
-    <span id="statusSkJabatan"></span>
-  </div>
-  <div class="form-group">
-    <label>Unggah PAK Terakhir :</label>
-    <input type="file" id="filePak" disabled>
-    <span id="statusPak"></span>
-  </div>
-</div>
-
-<div class="row-flex">
-  <div class="form-group">
-    <label>Unggah Ijazah :</label>
-    <input type="file" id="fileIjazah" disabled>
-    <span id="statusIjazah"></span>
-  </div>
-  <div class="form-group">
-    <label>Unggah Sertifikat Diklat :</label>
-    <input type="file" id="fileSertifikat" disabled>
-    <span id="statusSertifikat"></span>
-  </div>
-</div>
-
-<!-- TOMBOL AKSI -->
-<div class="row-buttons">
-  <button type="button" id="btnSesiEdit" onclick="aktifkanModeEdit()" disabled>Buka Kunci Edit</button>
-  <button type="button" id="btnSesiSimpan" onclick="simpanPerubahan()" disabled>Simpan Perubahan</button>
-</div>
-
-<!-- ELEMEN TRACKER INTERNAL & STATUS -->
-<input type="hidden" id="noBaris">
-<input type="hidden" id="namaSheet">
-<div id="statusPegawai" style="display:none;">Belum Cari</div>
-<div id="status" style="display:none; padding: 10px; margin-top: 10px; font-weight: bold;"></div>
 
 <script>
-// --- 1. FUNGSI PENCARIAN GANDA SINKRON SERVER ---
-function cariDataPegawaiGabungan() {
-  var nipInput = document.getElementById('cariNip').value.trim();
-  var hpInput = document.getElementById('cariNoHp').value.trim();
+  // Menyimpan sementara data pegawai saat tertahan di layar ganti sandi pertama
+  var dataPegawaiSementara = null;
 
-  if (!nipInput || !hpInput) {
-    tampilkanStatus("Wajib mengisi KEDUA kolom (NIP dan No HP) sebelum mencari!", "red");
-    return;
-  }
-
-  tampilkanStatus("Memverifikasi kecocokan data ke server...", "#2980b9");
-
-  google.script.run
-    .withSuccessHandler(function(data) {
-      if (data) {
-        // Buka gembok form sesaat agar data bisa masuk dari server
-        setFormDisabledState(false);
-
-        // Pengisian tracker internal
-        if(document.getElementById('noBaris')) document.getElementById('noBaris').value = data.baris;
-        if(document.getElementById('namaSheet')) document.getElementById('namaSheet').value = data.namaSheet;
-
-        // Petakan data dari JSON ke form input objek
-        var mapData = {
-          'namaData': data.nama,
-          'nipData': data.nip,
-          'asalInstansiData': data.asalInstansi,
-          'pangkatData': data.pangkat,
-          'tmtPangkatData': data.tmtPangkat,
-          'jabatanData': data.jabatan,
-          'tmtJabatanData': data.tmtJabatan,
-          'wilayahKerjaData': data.wilayahKerja,
-          'kabupatenKotaData': data.kabupatenKota,
-          'unitKerjaData': data.unitKerja,
-          'bidangKerjaData': data.bidangKerja,
-          'tanggalLahirData': data.tanggalLahir, // Pastikan dari Kode.gs berformat YYYY-MM-DD
-          'pendidikanData': data.pendidikanTerakhir,
-          'prodiData': data.programStudi,
-          'noHpData': data.noHp,
-          'emailData': data.email,
-          'diklatData': data.diklat,
-          'pakTerakhirData': data.pakTerakhir
-        };
-
-        for (var idTarget in mapData) {
-          var elemenInput = document.getElementById(idTarget);
-          if (elemenInput) {
-            elemenInput.value = mapData[idTarget] || "";
-          }
-        }
-
-        // Render link dokumen eksisting
-        renderLinkEksisting('statusSkPengangkatan', data.linkSkPengangkatan);
-        renderLinkEksisting('statusSkPangkat', data.linkSkPangkat);
-        renderLinkEksisting('statusSkJabatan', data.linkSkJabatan);
-        renderLinkEksisting('statusPak', data.linkPak);
-        renderLinkEksisting('statusIjazah', data.linkIjazah);
-        renderLinkEksisting('statusSertifikat', data.linkSertifikat);
-
-        // Atur badge status pegawai (PNS atau PPPK)
-        var statusPegawaiBox = document.getElementById('statusPegawai');
-        if (statusPegawaiBox) {
-          if (data.namaSheet === "Data_PNS") {
-            statusPegawaiBox.innerHTML = 'PNS';
-          } else {
-            statusPegawaiBox.innerHTML = 'PPPK';
-          }
-        }
-
-        // Kembalikan form ke status terkunci hingga tombol edit ditekan
-        setFormDisabledState(true);
-        if(document.getElementById('btnSesiEdit')) document.getElementById('btnSesiEdit').disabled = false;
-        if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = true;
-        
-        tampilkanStatus("Data Berhasil Diverifikasi! Asal Sheet: " + data.namaSheet, "#2ecc71");
-      } else {
-        tampilkanStatus("Kombinasi NIP dan No HP salah atau tidak ditemukan!", "red");
-        bersihkanForm();
-      }
-    })
-    .withFailureHandler(function(err) {
-      tampilkanStatus("Sistem Gagal Membaca Server: " + err.message, "red");
-    })
-    .ambilDataKombinasiGanda(nipInput, hpInput);
-}
-
-// --- 2. FUNGSI BANTU INTERFACES ---
-function renderLinkEksisting(elementId, url) {
-  var container = document.getElementById(elementId);
-  if (!container) return;
-  if (url && url.toString().startsWith("http")) {
-    container.innerHTML = '<a href="' + url + '" target="_blank" style="color: #2980b9; text-decoration: none; margin-left: 5px;">👁️ Lihat Dokumen Aktif</a>';
-  } else {
-    container.innerHTML = '<span style="color: #e67e22; margin-left: 5px;">⚠️ Belum ada berkas</span>';
-  }
-}
-
-function setFormDisabledState(disabled) {
-  var inputs = [
-    'namaData','asalInstansiData','pangkatData','tmtPangkatData','jabatanData','tmtJabatanData',
-    'bidangKerjaData','tanggalLahirData','pendidikanData','prodiData','emailData','diklatData',
-    'pakTerakhirData','fileSkPengangkatan','fileSkPangkat','fileSkJabatan','filePak','fileIjazah','fileSertifikat'
-  ];
-  inputs.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.disabled = disabled;
-  });
-}
-
-function aktifkanModeEdit() {
-  setFormDisabledState(false);
-  if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = false;
-  tampilkanStatus("Mode Edit Aktif! Silakan perbarui data Anda.", "#3498db");
-}
-
-// --- 3. FUNGSI UPDATE DATA (TOMBOL SIMPAN) ---
-function simpanPerubahan() {
-  tampilkanStatus("Memulai proses pembaruan data dan berkas...", "#2980b9");
-  
-  // 1. Ambil data teks utama dari elemen input
-  var nipPegawai = document.getElementById('nipData') ? document.getElementById('nipData').value : '';
-  
-  var dataUpdate = {
-    nomorBaris: document.getElementById('noBaris') ? document.getElementById('noBaris').value : '',
-    namaSheet: document.getElementById('namaSheet') ? document.getElementById('namaSheet').value : '',
-    nama: document.getElementById('namaData') ? document.getElementById('namaData').value : '',
-    asalInstansi: document.getElementById('asalInstansiData') ? document.getElementById('asalInstansiData').value : '',
-    pangkat: document.getElementById('pangkatData') ? document.getElementById('pangkatData').value : '',
-    tmtPangkat: document.getElementById('tmtPangkatData') ? document.getElementById('tmtPangkatData').value : '',
-    jabatan: document.getElementById('jabatanData') ? document.getElementById('jabatanData').value : '',
-    tmtJabatan: document.getElementById('tmtJabatanData') ? document.getElementById('tmtJabatanData').value : '',
-    bidangKerja: document.getElementById('bidangKerjaData') ? document.getElementById('bidangKerjaData').value : '',
-    tanggalLahir: document.getElementById('tanggalLahirData') ? document.getElementById('tanggalLahirData').value : '',
-    pendidikanTerakhir: document.getElementById('pendidikanData') ? document.getElementById('pendidikanData').value : '',
-    programStudi: document.getElementById('prodiData') ? document.getElementById('prodiData').value : '',
-    email: document.getElementById('emailData') ? document.getElementById('emailData').value : '',
-    diklat: document.getElementById('diklatData') ? document.getElementById('diklatData').value : '',
-    pakTerakhir: document.getElementById('pakTerakhirData') ? document.getElementById('pakTerakhirData').value : '',
-    
-    // Variabel penampung link dokumen (default kosong jika tidak ganti berkas)
-    linkSkPengangkatan: '',
-    linkSkPangkat: '',
-    linkSkJabatan: '',
-    linkPak: '',
-    linkIjazah: '',
-    linkSertifikat: ''
-  };
-
-  // 2. Daftar komponen input file beserta jenis dokumennya
-  var listFile = [
-    { idInput: 'fileSkPengangkatan', jenis: 'SK_Pengangkatan', keyLink: 'linkSkPengangkatan' },
-    { idInput: 'fileSkPangkat', jenis: 'SK_Pangkat', keyLink: 'linkSkPangkat' },
-    { idInput: 'fileSkJabatan', jenis: 'SK_Jabatan', keyLink: 'linkSkJabatan' },
-    { idInput: 'filePak', jenis: 'PAK', keyLink: 'linkPak' },
-    { idInput: 'fileIjazah', jenis: 'Ijazah', keyLink: 'linkIjazah' },
-    { idInput: 'fileSertifikat', jenis: 'Sertifikat', keyLink: 'linkSertifikat' }
-  ];
-
-  var antreanProses = [];
-
-  // 3. Periksa input file satu per satu, jika ada file baru, masukkan ke antrean konversi Base64
-  listFile.forEach(function(item) {
-    var fileInput = document.getElementById(item.idInput);
-    if (fileInput && fileInput.files.length > 0) {
-      var berkas = fileInput.files[0];
-      
-      // Definisikan proses konversi asinkron ke Base64
-      var janjiUnggah = new Promise(function(resolve) {
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var fileData = {
-            name: berkas.name,
-            type: berkas.type,
-            data: e.target.result.split(',')[1] // Ambil teks Base64 murni
-          };
-          
-          tampilkanStatus("Mengunggah berkas " + item.jenis + " ke Google Drive...", "#e67e22");
-          
-          // Tembak ke fungsi unggah di Kode.gs Anda
-          google.script.run
-            .withSuccessHandler(function(urlDrive) {
-              dataUpdate[item.keyLink] = urlDrive; // Simpan URL hasil unggahan ke objek dataUpdate
-              resolve();
-            })
-            .withFailureHandler(function(err) {
-              console.error("Gagal unggah " + item.jenis + ": " + err.message);
-              resolve(); // Tetap lanjut agar tidak macet total
-            })
-            .unggahFileMultiKomponen(fileData, nipPegawai, item.jenis);
-        };
-        reader.readAsDataURL(berkas);
-      });
-      
-      antreanProses.push(janjiUnggah);
+  // --- FUNGSI BUKA CONTACT CENTER SAAT LUPA SANDI ---
+  function bukaContactCenterDariEdit() {
+    // Tutup modal Edit Data JF terlebih dahulu lalu buka modal Contact Center
+    var modalEditEl = document.getElementById("modalEditAksi");
+    if (modalEditEl && typeof bootstrap !== "undefined") {
+      var instanceEdit = bootstrap.Modal.getInstance(modalEditEl);
+      if (instanceEdit) instanceEdit.hide();
     }
-  });
+    if (typeof openContactModal === "function") {
+      setTimeout(function () {
+        openContactModal();
+      }, 250);
+    }
+  }
 
-  // 4. Setelah semua antrean file selesai diunggah, jalankan update massal ke Sheets
-  Promise.all(antreanProses).then(function() {
-    tampilkanStatus("Menyimpan data teks dan tautan dokumen ke spreadsheet...", "#2980b9");
-    
+  // --- FUNGSI GANTI PASSWORD (SETELAH MASUK) ---
+  function bukaFormGantiSandi() {
+    var area = document.getElementById("areaGantiSandiAktif");
+    if (area) {
+      area.style.display = "block";
+      document.getElementById("inputUbahSandiBaru").value = "";
+      document.getElementById("inputUbahKonfirmasiSandi").value = "";
+      area.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function batalGantiSandi() {
+    document.getElementById("areaGantiSandiAktif").style.display = "none";
+    tampilkanStatus("", "transparent"); // Bersihkan notifikasi
+  }
+
+  function prosesGantiSandiAktif() {
+    var nipInput = document.getElementById("cariNip").value.trim();
+    var sandiLama = document.getElementById("cariNoHp").value.trim();
+    var sandiBaru = document.getElementById("inputUbahSandiBaru").value.trim();
+    var konfirmasi = document
+      .getElementById("inputUbahKonfirmasiSandi")
+      .value.trim();
+
+    if (sandiBaru.length < 6) {
+      tampilkanStatus("Kata sandi baru minimal harus 6 karakter!", "red");
+      return;
+    }
+    if (sandiBaru !== konfirmasi) {
+      tampilkanStatus("Konfirmasi kata sandi tidak cocok!", "red");
+      return;
+    }
+    if (sandiBaru === sandiLama) {
+      tampilkanStatus(
+        "Kata sandi baru tidak boleh sama dengan sandi saat ini!",
+        "red",
+      );
+      return;
+    }
+
+    tampilkanStatus("Menyimpan kata sandi baru...", "#2980b9");
+
     google.script.run
-      .withSuccessHandler(function(respons) {
-        if (respons === "SUKSES") {
-          tampilkanStatus("Seluruh data dan berkas berhasil diperbarui!", "#2ecc71");
-          setFormDisabledState(true);
-          if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = true;
+      .withSuccessHandler(function (res) {
+        if (res && res.sukses) {
+          document.getElementById("cariNoHp").value = sandiBaru; // Update sesi saat ini dengan sandi baru
+          batalGantiSandi();
+          tampilkanStatus(
+            "Kata sandi berhasil diubah! Gunakan sandi baru Anda untuk login berikutnya.",
+            "#2ecc71",
+          );
         } else {
-          tampilkanStatus(respons, "red");
+          tampilkanStatus(
+            res ? res.pesan : "Gagal mengubah kata sandi.",
+            "red",
+          );
         }
       })
-      .withFailureHandler(function(err) {
-        tampilkanStatus("Gagal menyimpan ke Sheets: " + err.message, "red");
+      .withFailureHandler(function (err) {
+        tampilkanStatus("Gagal menghubungi server: " + err.message, "red");
       })
-      .updateDataPegawaiMassal(dataUpdate);
-  });
-}
-
-function tampilkanStatus(pesan, warna) {
-  var statusBox = document.getElementById('status');
-  if (statusBox) {
-    statusBox.style.display = "block";
-    statusBox.style.color = warna;
-    statusBox.innerText = pesan;
+      .simpanSandiBaruPegawai(nipInput, sandiLama, sandiBaru);
   }
-}
 
-function bersihkanForm() {
-  var inputs = [
-    'noBaris','namaSheet','namaData','nipData','asalInstansiData','pangkatData','tmtPangkatData',
-    'jabatanData','tmtJabatanData','bidangKerjaData','tanggalLahirData','pendidikanData',
-    'prodiData','emailData','diklatData','pakTerakhirData'
-  ];
-  inputs.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.value = "";
-  });
-  
-  setFormDisabledState(true);
-  if(document.getElementById('statusPegawai')) document.getElementById('statusPegawai').innerHTML = 'Belum Cari';
-  if(document.getElementById('btnSesiEdit')) document.getElementById('btnSesiEdit').disabled = true;
-  if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = true;
-}
-</script>
+  // --- 1. PENGATUR TAMPILAN DOKUMEN PNS (8 FILE) VS PPPK (3 FILE) ---
+  function sesuaikanKolomDokumen(namaSheet) {
+    var isPPPK =
+      namaSheet && namaSheet.toString().toUpperCase().includes("PPPK");
 
-
-
-<!-- MASUKKAN KODE INI DI BARIS PALING BAWAH FILE HTML ANDA -->
-<script>
-(function() {
-  // Tunggu sampai halaman benar-benar selesai dimuat oleh browser
-  window.addEventListener('DOMContentLoaded', function() {
-    var tombolCari = document.getElementById('btnCariPegawaiUtama');
-    
-    if (tombolCari) {
-      tombolCari.addEventListener('click', function() {
-        var nipInput = document.getElementById('cariNip') ? document.getElementById('cariNip').value.trim() : "";
-        var hpInput = document.getElementById('cariNoHp') ? document.getElementById('cariNoHp').value.trim() : "";
-        
-        // Fungsi bantu status lokal agar mandiri
-        var setStatusLokal = function(pesan, warna) {
-          var statusBox = document.getElementById('status');
-          if (statusBox) {
-            statusBox.style.display = "block";
-            statusBox.style.color = warna;
-            statusBox.innerText = pesan;
-          }
-        };
-
-        if (!nipInput || !hpInput) {
-          setStatusLokal("Wajib mengisi KEDUA kolom (NIP dan No HP) sebelum mencari!", "red");
-          return;
-        }
-        
-        setStatusLokal("Memverifikasi kecocokan data ke server...", "#2980b9");
-        
-        // Tembak langsung ke server Apps Script tanpa jembatan fungsi luar
-        google.script.run
-          .withSuccessHandler(function(data) {
-            if (data) {
-              // 1. Buka gembok seluruh elemen input
-              var inputs = ['namaData','asalInstansiData','pangkatData','tmtPangkatData','jabatanData','tmtJabatanData','bidangKerjaData','tanggalLahirData','pendidikanData','prodiData','emailData','diklatData','pakTerakhirData','fileSkPengangkatan','fileSkPangkat','fileSkJabatan','filePak','fileIjazah','fileSertifikat'];
-              inputs.forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el) el.disabled = false;
-              });
-              
-              // 2. Isi data tracker internal
-              if(document.getElementById('noBaris')) document.getElementById('noBaris').value = data.baris;
-              if(document.getElementById('namaSheet')) document.getElementById('namaSheet').value = data.namaSheet;
-              
-              // 3. Petakan hasil ke form
-              var mapData = {
-                'namaData': data.nama,
-                'nipData': data.nip,
-                'asalInstansiData': data.asalInstansi,
-                'pangkatData': data.pangkat,
-                'tmtPangkatData': data.tmtPangkat,
-                'jabatanData': data.jabatan,
-                'tmtJabatanData': data.tmtJabatan,
-                'wilayahKerjaData': data.wilayahKerja,
-                'kabupatenKotaData': data.kabupatenKota,
-                'unitKerjaData': data.unitKerja,
-                'bidangKerjaData': data.bidangKerja,
-                'tanggalLahirData': data.tanggalLahir,
-                'pendidikanData': data.pendidikanTerakhir,
-                'prodiData': data.programStudi,
-                'noHpData': data.noHp,
-                'emailData': data.email,
-                'diklatData': data.diklat,
-                'pakTerakhirData': data.pakTerakhir
-              };
-
-              for (var idTarget in mapData) {
-                var elInput = document.getElementById(idTarget);
-                if (elInput) elInput.value = mapData[idTarget] || "";
-              }
-              
-              // 4. Render link dokumen aktif
-              var renderLink = function(elementId, url) {
-                var container = document.getElementById(elementId);
-                if (!container) return;
-                if (url && url.toString().startsWith("http")) {
-                  container.innerHTML = '<a class="file-status-link" href="' + url + '" target="_blank">👁️ Lihat Dokumen Aktif</a>';
-                } else {
-                  container.innerHTML = '<span class="file-status-link" style="color:#e74c3c;">⚠️ Belum ada berkas</span>';
-                }
-              };
-              
-              renderLink('statusSkPengangkatan', data.linkSkPengangkatan);
-              renderLink('statusSkPangkat', data.linkSkPangkat);
-              renderLink('statusSkJabatan', data.linkSkJabatan);
-              renderLink('statusPak', data.linkPak);
-              renderLink('statusIjazah', data.linkIjazah);
-              renderLink('statusSertifikat', data.linkSertifikat);
-              
-              // 5. Ubah warna badge status
-              var statusPegawaiBox = document.getElementById('statusPegawai');
-              if (statusPegawaiBox) {
-                if (data.namaSheet === "Data_PNS") {
-                  statusPegawaiBox.innerHTML = '<span class="badge badge-pns" style="background-color:#f39c12; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">PNS</span>';
-                } else {
-                  statusPegawaiBox.innerHTML = '<span class="badge badge-pppk" style="background-color:#2ecc71; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">PPPK</span>';
-                }
-              }
-              
-              if(document.getElementById('btnSesiEdit')) document.getElementById('btnSesiEdit').disabled = false;
-              if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = true;
-              
-              setStatusLokal("Data Berhasil Diverifikasi! Asal: " + data.namaSheet, "#2ecc71");
-            } else {
-              setStatusLokal("Kombinasi NIP dan No HP salah atau tidak ditemukan!", "red");
-            }
-          })
-          .withFailureHandler(function(err) {
-            setStatusLokal("Sistem Gagal Membaca Server: " + err.message, "red");
-          })
-          .ambilDataKombinasiGanda(nipInput, hpInput);
+    if (isPPPK) {
+      document.querySelectorAll(".dok-pns").forEach(function (el) {
+        el.style.display = "none";
       });
-    }
-  });
-})();
-</script>
-
-
-<!-- MASUKKAN KODE INI DI BARIS PALING BAWAH FILE HTML ANDA -->
-<script>
-(function() {
-  // Tunggu sampai halaman benar-benar selesai dimuat oleh browser
-  window.addEventListener('DOMContentLoaded', function() {
-    var tombolCari = document.getElementById('btnCariPegawaiUtama');
-    
-    if (tombolCari) {
-      tombolCari.addEventListener('click', function() {
-        var nipInput = document.getElementById('cariNip') ? document.getElementById('cariNip').value.trim() : "";
-        var hpInput = document.getElementById('cariNoHp') ? document.getElementById('cariNoHp').value.trim() : "";
-        
-        // Fungsi bantu status lokal agar mandiri
-        var setStatusLokal = function(pesan, warna) {
-          var statusBox = document.getElementById('status');
-          if (statusBox) {
-            statusBox.style.display = "block";
-            statusBox.style.color = warna;
-            statusBox.innerText = pesan;
-          }
-        };
-
-        if (!nipInput || !hpInput) {
-          setStatusLokal("Wajib mengisi KEDUA kolom (NIP dan No HP) sebelum mencari!", "red");
-          return;
-        }
-        
-        setStatusLokal("Memverifikasi kecocokan data ke server...", "#2980b9");
-        
-        // Tembak langsung ke server Apps Script tanpa jembatan fungsi luar
-        google.script.run
-          .withSuccessHandler(function(data) {
-            if (data) {
-              // 1. Buka gembok seluruh elemen input
-              var inputs = ['namaData','asalInstansiData','pangkatData','tmtPangkatData','jabatanData','tmtJabatanData','bidangKerjaData','tanggalLahirData','pendidikanData','prodiData','emailData','diklatData','pakTerakhirData','fileSkPengangkatan','fileSkPangkat','fileSkJabatan','filePak','fileIjazah','fileSertifikat'];
-              inputs.forEach(function(id) {
-                var el = document.getElementById(id);
-                if (el) el.disabled = false;
-              });
-              
-              // 2. Isi data tracker internal
-              if(document.getElementById('noBaris')) document.getElementById('noBaris').value = data.baris;
-              if(document.getElementById('namaSheet')) document.getElementById('namaSheet').value = data.namaSheet;
-              
-              // 3. Petakan hasil ke form
-              var mapData = {
-                'namaData': data.nama,
-                'nipData': data.nip,
-                'asalInstansiData': data.asalInstansi,
-                'pangkatData': data.pangkat,
-                'tmtPangkatData': data.tmtPangkat,
-                'jabatanData': data.jabatan,
-                'tmtJabatanData': data.tmtJabatan,
-                'wilayahKerjaData': data.wilayahKerja,
-                'kabupatenKotaData': data.kabupatenKota,
-                'unitKerjaData': data.unitKerja,
-                'bidangKerjaData': data.bidangKerja,
-                'tanggalLahirData': data.tanggalLahir,
-                'pendidikanData': data.pendidikanTerakhir,
-                'prodiData': data.programStudi,
-                'noHpData': data.noHp,
-                'emailData': data.email,
-                'diklatData': data.diklat,
-                'pakTerakhirData': data.pakTerakhir
-              };
-
-              for (var idTarget in mapData) {
-                var elInput = document.getElementById(idTarget);
-                if (elInput) elInput.value = mapData[idTarget] || "";
-              }
-              
-              // 4. Render link dokumen aktif
-              var renderLink = function(elementId, url) {
-                var container = document.getElementById(elementId);
-                if (!container) return;
-                if (url && url.toString().startsWith("http")) {
-                  container.innerHTML = '<a class="file-status-link" href="' + url + '" target="_blank">👁️ Lihat Dokumen Aktif</a>';
-                } else {
-                  container.innerHTML = '<span class="file-status-link" style="color:#e74c3c;">⚠️ Belum ada berkas</span>';
-                }
-              };
-              
-              renderLink('statusSkPengangkatan', data.linkSkPengangkatan);
-              renderLink('statusSkPangkat', data.linkSkPangkat);
-              renderLink('statusSkJabatan', data.linkSkJabatan);
-              renderLink('statusPak', data.linkPak);
-              renderLink('statusIjazah', data.linkIjazah);
-              renderLink('statusSertifikat', data.linkSertifikat);
-              
-              // 5. Ubah warna badge status
-              var statusPegawaiBox = document.getElementById('statusPegawai');
-              if (statusPegawaiBox) {
-                if (data.namaSheet === "Data_PNS") {
-                  statusPegawaiBox.innerHTML = '<span class="badge badge-pns" style="background-color:#f39c12; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">PNS</span>';
-                } else {
-                  statusPegawaiBox.innerHTML = '<span class="badge badge-pppk" style="background-color:#2ecc71; color:white; padding:4px 8px; border-radius:4px; font-weight:bold;">PPPK</span>';
-                }
-              }
-              
-              if(document.getElementById('btnSesiEdit')) document.getElementById('btnSesiEdit').disabled = false;
-              if(document.getElementById('btnSesiSimpan')) document.getElementById('btnSesiSimpan').disabled = true;
-              
-              setStatusLokal("Data Berhasil Diverifikasi! Asal: " + data.namaSheet, "#2ecc71");
-            } else {
-              setStatusLokal("Kombinasi NIP dan No HP salah atau tidak ditemukan!", "red");
-            }
-          })
-          .withFailureHandler(function(err) {
-            setStatusLokal("Sistem Gagal Membaca Server: " + err.message, "red");
-          })
-          .ambilDataKombinasiGanda(nipInput, hpInput);
+      document.querySelectorAll(".dok-pppk").forEach(function (el) {
+        el.style.display = "block";
       });
-    }
-  });
-})();
 
-  // =================================================================
-  // TAMBAHKAN KODE INI DI BAGIAN PALING BAWAH (SEBELUM TAG </script>)
-  // =================================================================
-  
-  // Fungsi untuk membersihkan form jika data tidak ditemukan
+      document.getElementById("lblSkPengangkatan").innerText =
+        "1. Unggah SK Pengangkatan PPPK :";
+      document.getElementById("lblIjazah").innerText =
+        "2. Unggah Ijazah Pendidikan Terakhir :";
+      document.getElementById("lblSertifikat").innerText =
+        "3. Unggah Sertifikat Diklat PB :";
+      document.getElementById("judulSectionDokumen").innerText =
+        "E. Unggah Dokumen PPPK (Wajib PDF, Maks. 1 MB)";
+    } else {
+      document.querySelectorAll(".dok-pns").forEach(function (el) {
+        el.style.display = "block";
+      });
+
+      document.getElementById("lblSkCpns").innerText = "1. Unggah SK CPNS :";
+      document.getElementById("lblSkPengangkatan").innerText =
+        "2. Unggah SK Pengangkatan dalam JF :";
+      document.getElementById("lblSkPangkat").innerText =
+        "3. Unggah SK Golongan Pangkat Akhir :";
+      document.getElementById("lblSkJabatan").innerText =
+        "4. Unggah SK Jabatan Terakhir :";
+      document.getElementById("lblPak").innerText = "5. Unggah PAK Terakhir :";
+      document.getElementById("lblIjazah").innerText =
+        "6. Unggah Ijazah Pendidikan Terakhir :";
+      document.getElementById("lblSertifikat").innerText =
+        "7. Unggah Sertifikat Diklat PB :";
+      document.getElementById("lblSertifikatKompetensi").innerText =
+        "8. Unggah Sertifikat Kompetensi JF :";
+      document.getElementById("judulSectionDokumen").innerText =
+        "E. Unggah Dokumen PNS (Wajib PDF, Maks. 1 MB)";
+    }
+  }
+
+  // --- 2. VALIDASI WAJIB PDF & MAKSIMAL 1 MB + TAMPILKAN NAMA FILE ---
+  function validasiDanTampilkanFile(inputEl, statusId) {
+    var container = document.getElementById(statusId);
+    if (!inputEl.files || inputEl.files.length === 0) return;
+
+    var file = inputEl.files[0];
+    var maxBytes = 1048576; // 1 MB
+    var isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      alert("Format file ditolak! Harap pilih file dengan format .PDF");
+      inputEl.value = "";
+      return;
+    }
+
+    if (file.size > maxBytes) {
+      var mb = (file.size / 1048576).toFixed(2);
+      alert(
+        "Ukuran file terlalu besar (" +
+          mb +
+          " MB)! Maksimal ukuran file adalah 1 MB.",
+      );
+      inputEl.value = "";
+      return;
+    }
+
+    var kb = Math.round(file.size / 1024);
+    if (container) {
+      container.innerHTML =
+        '<span style="color:#2563eb; font-weight:600; word-break:break-all;">📄 File dipilih: ' +
+        file.name +
+        " (" +
+        kb +
+        " KB)</span>";
+    }
+  }
+
+  // --- 3. RENDER NAMA FILE YANG SUDAH DIUPLOAD DI SERVER ---
+  function renderLinkEksisting(
+    elementId,
+    url,
+    jenisDok,
+    namaPegawai,
+    nipPegawai,
+  ) {
+    var container = document.getElementById(elementId);
+    if (!container) return;
+
+    if (url && url.toString().startsWith("http")) {
+      var namaBersih = (namaPegawai || "Pegawai")
+        .toString()
+        .replace(/[\\/:*?"<>|]/g, "")
+        .trim();
+      var nipBersih = (nipPegawai || "").toString().replace(/\s+/g, "").trim();
+      var namaFileTampil =
+        jenisDok + "_" + namaBersih + "_" + nipBersih + ".pdf";
+
+      container.innerHTML =
+        '<span style="color: #16a34a; font-weight: 600; word-break: break-all;">✅ ' +
+        namaFileTampil +
+        "</span>" +
+        '<a href="' +
+        url +
+        '" target="_blank" style="color: #2563eb; text-decoration: none; font-weight: bold; white-space: nowrap; margin-left: 8px;">👁️ Lihat</a>';
+    } else {
+      container.innerHTML =
+        '<span style="color: #e67e22;">⚠️ Belum ada berkas terunggah</span>';
+    }
+  }
+
+  // --- 4. FUNGSI MEMBUKA & MENGISI FORMULIR DATA PEGAWAI ---
+  function tampilkanFormulirPegawai(data) {
+    document.getElementById("pesanBelumVerifikasi").style.display = "none";
+    document.getElementById("areaGantiSandiPertama").style.display = "none";
+    document.getElementById("areaIsianPegawai").style.display = "block";
+    document.getElementById("areaGantiSandiAktif").style.display = "none";
+
+    setFormDisabledState(false);
+
+    document.getElementById("noBaris").value = data.baris;
+    document.getElementById("namaSheet").value = data.namaSheet;
+
+    sesuaikanKolomDokumen(data.namaSheet);
+
+    var mapData = {
+      namaData: data.nama,
+      nipData: data.nip,
+      asalInstansiData: data.asalInstansi,
+      pangkatData: data.pangkat,
+      tmtPangkatData: data.tmtPangkat,
+      jabatanData: data.jabatan,
+      tmtJabatanData: data.tmtJabatan,
+      wilayahKerjaData: data.wilayahKerja,
+      kabupatenKotaData: data.kabupatenKota,
+      unitKerjaData: data.unitKerja,
+      bidangKerjaData: data.bidangKerja,
+      tanggalLahirData: data.tanggalLahir,
+      pendidikanData: data.pendidikanTerakhir,
+      prodiData: data.programStudi,
+      noHpData: data.noHp,
+      emailData: data.email,
+      diklatData: data.diklat,
+      pakTerakhirData: data.pakTerakhir,
+    };
+
+    for (var idTarget in mapData) {
+      var elemenInput = document.getElementById(idTarget);
+      if (elemenInput) elemenInput.value = mapData[idTarget] || "";
+    }
+
+    [
+      "fileSkCpns",
+      "fileSkPengangkatan",
+      "fileSkPangkat",
+      "fileSkJabatan",
+      "filePak",
+      "fileIjazah",
+      "fileSertifikat",
+      "fileSertifikatKompetensi",
+    ].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    var isPPPK = data.namaSheet === "Data_PPPK";
+    renderLinkEksisting(
+      "statusSkCpns",
+      data.linkSkCpns,
+      "SK_CPNS",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting(
+      "statusSkPengangkatan",
+      data.linkSkPengangkatan,
+      isPPPK ? "SK_Pengangkatan_PPPK" : "SK_Pengangkatan_JF",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting(
+      "statusSkPangkat",
+      data.linkSkPangkat,
+      "SK_Pangkat",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting(
+      "statusSkJabatan",
+      data.linkSkJabatan,
+      "SK_Jabatan",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting("statusPak", data.linkPak, "PAK", data.nama, data.nip);
+    renderLinkEksisting(
+      "statusIjazah",
+      data.linkIjazah,
+      "Ijazah",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting(
+      "statusSertifikat",
+      data.linkSertifikat,
+      "Sertifikat_Diklat_PB",
+      data.nama,
+      data.nip,
+    );
+    renderLinkEksisting(
+      "statusSertifikatKompetensi",
+      data.linkSertifikatKompetensi,
+      "Sertifikat_Kompetensi_JF",
+      data.nama,
+      data.nip,
+    );
+
+    var statusPegawaiBox = document.getElementById("statusPegawai");
+    if (statusPegawaiBox) {
+      if (data.namaSheet === "Data_PNS") {
+        statusPegawaiBox.innerHTML = '<span class="badge badge-pns">PNS</span>';
+      } else {
+        statusPegawaiBox.innerHTML =
+          '<span class="badge badge-pppk">PPPK</span>';
+      }
+    }
+
+    setFormDisabledState(true);
+    document.getElementById("btnSesiEdit").disabled = false;
+    document.getElementById("btnSesiSimpan").disabled = true;
+  }
+
+  // --- 5. FUNGSI PENCARIAN VERIFIKASI NIP & SANDI ---
+  function cariDataPegawaiGabungan() {
+    var nipInput = document.getElementById("cariNip").value.trim();
+    var hpInput = document.getElementById("cariNoHp").value.trim();
+
+    if (!nipInput || !hpInput) {
+      tampilkanStatus(
+        "Wajib mengisi KEDUA kolom (NIP dan Kata Sandi) sebelum mencari!",
+        "red",
+      );
+      return;
+    }
+
+    tampilkanStatus("Memverifikasi kecocokan data ke server...", "#2980b9");
+
+    google.script.run
+      .withSuccessHandler(function (data) {
+        if (data) {
+          dataPegawaiSementara = data;
+          var isPPPK = data.namaSheet === "Data_PPPK";
+
+          if (data.wajibGantiSandi) {
+            document.getElementById("pesanBelumVerifikasi").style.display =
+              "none";
+            document.getElementById("areaIsianPegawai").style.display = "none";
+            document.getElementById("namaSambutanSandi").innerText =
+              data.nama || "Pegawai";
+            document.getElementById("inputSandiBaru").value = "";
+            document.getElementById("inputKonfirmasiSandiBaru").value = "";
+            document.getElementById("areaGantiSandiPertama").style.display =
+              "block";
+
+            tampilkanStatus(
+              "Verifikasi awal berhasil! Silakan buat Kata Sandi Baru Anda terlebih dahulu.",
+              "#d97706",
+            );
+          } else {
+            tampilkanFormulirPegawai(data);
+            tampilkanStatus(
+              "Data Berhasil Diverifikasi! Status: " +
+                (isPPPK ? "PPPK (3 Berkas)" : "PNS (8 Berkas)"),
+              "#2ecc71",
+            );
+          }
+        } else {
+          tampilkanStatus(
+            "Kombinasi NIP dan Kata Sandi salah atau tidak ditemukan!",
+            "red",
+          );
+          bersihkanForm();
+        }
+      })
+      .withFailureHandler(function (err) {
+        tampilkanStatus("Sistem Gagal Membaca Server: " + err.message, "red");
+      })
+      .ambilDataKombinasiGanda(nipInput, hpInput);
+  }
+
+  // --- 6. FUNGSI MENYIMPAN SANDI BARU PADA LOGIN PERTAMA ---
+  function prosesAktifkanSandiBaru() {
+    var nipInput = document.getElementById("cariNip").value.trim();
+    var sandiLama = document.getElementById("cariNoHp").value.trim();
+    var sandiBaru = document.getElementById("inputSandiBaru").value.trim();
+    var konfirmasi = document
+      .getElementById("inputKonfirmasiSandiBaru")
+      .value.trim();
+
+    if (sandiBaru.length < 6) {
+      tampilkanStatus("Kata sandi baru minimal harus 6 karakter!", "red");
+      return;
+    }
+    if (sandiBaru !== konfirmasi) {
+      tampilkanStatus(
+        "Konfirmasi kata sandi baru tidak cocok! Silakan ketik ulang.",
+        "red",
+      );
+      return;
+    }
+    if (sandiBaru === sandiLama) {
+      tampilkanStatus(
+        "Kata sandi baru tidak boleh sama dengan Nomor HP / sandi lama!",
+        "red",
+      );
+      return;
+    }
+
+    var btn = document.getElementById("btnSimpanSandiBaru");
+    btn.disabled = true;
+    tampilkanStatus("Mengaktifkan kata sandi baru Anda...", "#2980b9");
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        btn.disabled = false;
+        if (res && res.sukses) {
+          document.getElementById("cariNoHp").value = sandiBaru;
+          if (dataPegawaiSementara) {
+            tampilkanFormulirPegawai(dataPegawaiSementara);
+          }
+          tampilkanStatus(
+            "Kata sandi baru berhasil disimpan! Sekarang Anda dapat memeriksa atau mengedit data.",
+            "#2ecc71",
+          );
+        } else {
+          tampilkanStatus(
+            res ? res.pesan : "Gagal menyimpan sandi baru.",
+            "red",
+          );
+        }
+      })
+      .withFailureHandler(function (err) {
+        btn.disabled = false;
+        tampilkanStatus("Gagal menghubungi server: " + err.message, "red");
+      })
+      .simpanSandiBaruPegawai(nipInput, sandiLama, sandiBaru);
+  }
+
+  function setFormDisabledState(disabled) {
+    var inputs = [
+      "namaData",
+      "asalInstansiData",
+      "pangkatData",
+      "tmtPangkatData",
+      "jabatanData",
+      "tmtJabatanData",
+      "bidangKerjaData",
+      "tanggalLahirData",
+      "pendidikanData",
+      "prodiData",
+      "emailData",
+      "diklatData",
+      "pakTerakhirData",
+      "fileSkCpns",
+      "fileSkPengangkatan",
+      "fileSkPangkat",
+      "fileSkJabatan",
+      "filePak",
+      "fileIjazah",
+      "fileSertifikat",
+      "fileSertifikatKompetensi",
+    ];
+    inputs.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.disabled = disabled;
+    });
+  }
+
+  function aktifkanModeEdit() {
+    setFormDisabledState(false);
+    document.getElementById("btnSesiSimpan").disabled = false;
+    tampilkanStatus(
+      "Mode Edit Aktif! Silakan perbarui data atau unggah dokumen PDF (Maks 1 MB).",
+      "#3498db",
+    );
+  }
+
+  // --- 7. FUNGSI SIMPAN PERUBAHAN & UNGGAH BERKAS ---
+  function simpanPerubahan() {
+    tampilkanStatus("Memulai proses pembaruan data dan berkas...", "#2980b9");
+
+    var nipPegawai = document.getElementById("nipData")
+      ? document.getElementById("nipData").value
+      : "";
+    var namaPegawai = document.getElementById("namaData")
+      ? document.getElementById("namaData").value
+      : "";
+    var asalSheet = document.getElementById("namaSheet")
+      ? document.getElementById("namaSheet").value
+      : "Data_PNS";
+    var isPPPK = asalSheet === "Data_PPPK";
+
+    var dataUpdate = {
+      nipVerifikasi: document.getElementById("cariNip").value.trim(),
+      sandiVerifikasi: document.getElementById("cariNoHp").value.trim(),
+      nomorBaris: document.getElementById("noBaris").value,
+      namaSheet: asalSheet,
+      nama: namaPegawai,
+      asalInstansi: document.getElementById("asalInstansiData").value,
+      pangkat: document.getElementById("pangkatData").value,
+      tmtPangkat: document.getElementById("tmtPangkatData").value,
+      jabatan: document.getElementById("jabatanData").value,
+      tmtJabatan: document.getElementById("tmtJabatanData").value,
+      bidangKerja: document.getElementById("bidangKerjaData").value,
+      tanggalLahir: document.getElementById("tanggalLahirData").value,
+      pendidikanTerakhir: document.getElementById("pendidikanData").value,
+      programStudi: document.getElementById("prodiData").value,
+      email: document.getElementById("emailData").value,
+      diklat: document.getElementById("diklatData").value,
+      pakTerakhir: document.getElementById("pakTerakhirData").value,
+
+      linkSkCpns: "",
+      linkSkPengangkatan: "",
+      linkSkPangkat: "",
+      linkSkJabatan: "",
+      linkPak: "",
+      linkIjazah: "",
+      linkSertifikat: "",
+      linkSertifikatKompetensi: "",
+    };
+
+    var listFile = [
+      {
+        idInput: "fileSkCpns",
+        statusId: "statusSkCpns",
+        jenis: "SK_CPNS",
+        keyLink: "linkSkCpns",
+      },
+      {
+        idInput: "fileSkPengangkatan",
+        statusId: "statusSkPengangkatan",
+        jenis: isPPPK ? "SK_Pengangkatan_PPPK" : "SK_Pengangkatan_JF",
+        keyLink: "linkSkPengangkatan",
+      },
+      {
+        idInput: "fileSkPangkat",
+        statusId: "statusSkPangkat",
+        jenis: "SK_Pangkat",
+        keyLink: "linkSkPangkat",
+      },
+      {
+        idInput: "fileSkJabatan",
+        statusId: "statusSkJabatan",
+        jenis: "SK_Jabatan",
+        keyLink: "linkSkJabatan",
+      },
+      {
+        idInput: "filePak",
+        statusId: "statusPak",
+        jenis: "PAK",
+        keyLink: "linkPak",
+      },
+      {
+        idInput: "fileIjazah",
+        statusId: "statusIjazah",
+        jenis: "Ijazah",
+        keyLink: "linkIjazah",
+      },
+      {
+        idInput: "fileSertifikat",
+        statusId: "statusSertifikat",
+        jenis: "Sertifikat_Diklat_PB",
+        keyLink: "linkSertifikat",
+      },
+      {
+        idInput: "fileSertifikatKompetensi",
+        statusId: "statusSertifikatKompetensi",
+        jenis: "Sertifikat_Kompetensi_JF",
+        keyLink: "linkSertifikatKompetensi",
+      },
+    ];
+
+    var antreanProses = [];
+
+    listFile.forEach(function (item) {
+      var fileInput = document.getElementById(item.idInput);
+      if (fileInput && fileInput.files.length > 0) {
+        var berkas = fileInput.files[0];
+
+        var janjiUnggah = new Promise(function (resolve) {
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            var fileData = {
+              name: berkas.name,
+              type: berkas.type,
+              data: e.target.result.split(",")[1],
+            };
+
+            tampilkanStatus(
+              "Mengunggah berkas " + item.jenis + " ke Google Drive...",
+              "#e67e22",
+            );
+
+            google.script.run
+              .withSuccessHandler(function (urlDrive) {
+                dataUpdate[item.keyLink] = urlDrive;
+                renderLinkEksisting(
+                  item.statusId,
+                  urlDrive,
+                  item.jenis,
+                  namaPegawai,
+                  nipPegawai,
+                );
+                fileInput.value = "";
+                resolve();
+              })
+              .withFailureHandler(function (err) {
+                alert("Gagal mengunggah " + item.jenis + ": " + err.message);
+                resolve();
+              })
+              .unggahFileMultiKomponen(
+                fileData,
+                nipPegawai,
+                item.jenis,
+                namaPegawai,
+                asalSheet,
+              );
+          };
+          reader.readAsDataURL(berkas);
+        });
+
+        antreanProses.push(janjiUnggah);
+      }
+    });
+
+    Promise.all(antreanProses).then(function () {
+      tampilkanStatus(
+        "Menyimpan data dan tautan dokumen ke spreadsheet...",
+        "#2980b9",
+      );
+
+      google.script.run
+        .withSuccessHandler(function (respons) {
+          if (respons === "SUKSES") {
+            tampilkanStatus(
+              "Seluruh data dan berkas berhasil diperbarui!",
+              "#2ecc71",
+            );
+            setFormDisabledState(true);
+            document.getElementById("btnSesiSimpan").disabled = true;
+            if (typeof refreshLookerDanData === "function")
+              refreshLookerDanData();
+          } else {
+            tampilkanStatus(respons, "red");
+          }
+        })
+        .withFailureHandler(function (err) {
+          tampilkanStatus("Gagal menyimpan ke Sheets: " + err.message, "red");
+        })
+        .updateDataPegawaiMassal(dataUpdate);
+    });
+  }
+
+  function tampilkanStatus(pesan, warna) {
+    var statusBox = document.getElementById("status");
+    if (statusBox) {
+      statusBox.style.display = "block";
+      statusBox.style.color = warna;
+      statusBox.innerText = pesan;
+    }
+  }
+
   function bersihkanForm() {
-    var inputs = ['noBaris','namaSheet','namaData','nipData','asalInstansiData','pangkatData','tmtPangkatData','jabatanData','tmtJabatanData','bidangKerjaData','tanggalLahirData','pendidikanData','prodiData','emailData','diklatData','pakTerakhirData'];
-    inputs.forEach(function(id) {
+    var inputs = [
+      "noBaris",
+      "namaSheet",
+      "namaData",
+      "nipData",
+      "asalInstansiData",
+      "pangkatData",
+      "tmtPangkatData",
+      "jabatanData",
+      "tmtJabatanData",
+      "bidangKerjaData",
+      "tanggalLahirData",
+      "pendidikanData",
+      "prodiData",
+      "emailData",
+      "diklatData",
+      "pakTerakhirData",
+    ];
+    inputs.forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.value = "";
     });
     setFormDisabledState(true);
-    var statusPegawaiBox = document.getElementById('statusPegawai');
-    if (statusPegawaiBox) statusPegawaiBox.innerHTML = '<span class="badge" style="background:#94a3b8;">Belum Cari</span>';
+    document.getElementById("areaIsianPegawai").style.display = "none";
+    document.getElementById("areaGantiSandiPertama").style.display = "none";
+    document.getElementById("pesanBelumVerifikasi").style.display = "block";
+    document.getElementById("statusPegawai").innerHTML =
+      '<span class="badge" style="background:#94a3b8;">Belum Cari</span>';
+    document.getElementById("btnSesiEdit").disabled = true;
+    document.getElementById("btnSesiSimpan").disabled = true;
   }
-
-  // Mesin penggerak otomatis saat halaman selesai dimuat oleh browser
-  window.addEventListener('DOMContentLoaded', function() {
-    // 1. Kaitkan fungsi klik ke tombol Cari Data Utama
-    var tombolCariElemen = document.getElementById('btnCariPegawaiUtama');
-    if (tombolCariElemen) {
-      tombolCariElemen.addEventListener('click', cariDataPegawaiGabungan);
-    } else {
-      console.log("Peringatan: Elemen tombol dengan id='btnCariPegawaiUtama' tidak ditemukan di HTML!");
-    }
-    
-    // 2. Kaitkan fungsi klik ke tombol Buka Kunci Edit
-    var tombolEditElemen = document.getElementById('btnSesiEdit');
-    if (tombolEditElemen) {
-      tombolEditElemen.addEventListener('click', aktifkanModeEdit);
-    }
-  });
-
-
 </script>

@@ -7,31 +7,53 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   // =========================================================
   // 1. VARIABEL GLOBAL & MESIN STANDARISASI DATA
   // =========================================================
-  window.Apex = { chart: { fontFamily: 'Poppins, sans-serif' }, tooltip: { theme: 'dark' } };
-  $.fn.dataTable.ext.errMode = 'none';
+  window.Apex = {
+    chart: { fontFamily: "Poppins, sans-serif" },
+    tooltip: { theme: "dark" },
+  };
+  $.fn.dataTable.ext.errMode = "none";
 
   var dataCache = { PNS: [], CPNS: [], PPPK: [] };
-  var clean = (s) => String(s||"").toUpperCase().trim().replace(/\s+/g, ' ');
-  
-  var table; 
-  var globalMaps = { pangkat: {}, pppk: {}, jabatan: {}, jfk: {}, unitHierarchy: {}, gender: {} };
-  var dashboardStats = {}; 
+  var clean = (s) =>
+    String(s || "")
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, " ");
+
+  var table;
+  var globalMaps = {
+    pangkat: {},
+    pppk: {},
+    jabatan: {},
+    jfk: {},
+    unitHierarchy: {},
+    gender: {},
+  };
+  var dashboardStats = {};
 
   // MESIN PINTAR: Semua data disaring dan distandarisasi di sini
   function standarisasiPegawai(r, statusDefault) {
     if (!r) return null;
 
     let nama = String(r.nama || r.NAMA || "").trim();
-    let nipClean = String(r.nip || r.NIP || "").replace(/[^0-9]/g, '');
+    let nipClean = String(r.nip || r.NIP || "").replace(/[^0-9]/g, "");
     let rawJk = clean(r.jenis_kelamin || r.JENIS_KELAMIN || r.gender || "");
     let rawJab = clean(r.jabatan || r.JABATAN || "");
-    let rawWil = clean(r.jenis_jabatan || r.wilayahKerja || "").replace(/^(PROVINSI|BPBD|BPBA)\s+/i, '').trim();
+    let rawWil = clean(r.jenis_jabatan || r.wilayahKerja || "")
+      .replace(/^(PROVINSI|BPBD|BPBA)\s+/i, "")
+      .trim();
 
     if (!nama || nama.toLowerCase() === "nan") return null;
 
     let gender = "-";
-    if (rawJk.startsWith('L') || rawJk === 'PRIA' || rawJk === 'LAKI-LAKI') gender = "Laki-laki";
-    else if (rawJk.startsWith('P') || rawJk === 'WANITA' || rawJk === 'PEREMPUAN') gender = "Perempuan";
+    if (rawJk.startsWith("L") || rawJk === "PRIA" || rawJk === "LAKI-LAKI")
+      gender = "Laki-laki";
+    else if (
+      rawJk.startsWith("P") ||
+      rawJk === "WANITA" ||
+      rawJk === "PEREMPUAN"
+    )
+      gender = "Perempuan";
 
     let jenjang = "Lainnya";
     if (rawJab.includes("UTAMA")) jenjang = "Ahli Utama";
@@ -43,7 +65,8 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
     else if (rawJab.includes("TERAMPIL")) jenjang = "Terampil";
 
     let wilayah = rawWil;
-    if (!wilayah || wilayah === "-" || wilayah.includes("TERDEFINISI")) wilayah = "PUSAT";
+    if (!wilayah || wilayah === "-" || wilayah.includes("TERDEFINISI"))
+      wilayah = "PUSAT";
 
     return {
       ...r,
@@ -52,313 +75,301 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
       _jenjang: jenjang,
       _wilayah: wilayah,
       _status: r.status_pegawai || statusDefault,
-      _pangkat: String(r.pangkat || "-").trim()
+      _pangkat: String(r.pangkat || "-").trim(),
     };
   }
 
   // =========================================================
-  // 2. FUNGSI INISIALISASI AWAL 
+  // 2. FUNGSI INISIALISASI AWAL
   // =========================================================
   function updateProgress(val, text, iconClass) {
-    $('.progress-bar-load').css('width', val + '%'); 
-    $('#percentage-text').text(val + '%'); 
-    $('#status-text').text(text);
-    if(iconClass) $('#loading-icon-container').html(`<i class="${iconClass} fade-icon"></i>`);
-  }
-  
-  var mySessionKey = 'USR_' + Math.floor(Math.random() * 10000) + '_' + new Date().getTime();
-  function sendPing() { 
-      google.script.run.withSuccessHandler(function(count) { 
-          if(count) $('#live-user-count').text(count); 
-      }).userHeartbeat(mySessionKey); 
+    $(".progress-bar-load").css("width", val + "%");
+    $("#percentage-text").text(val + "%");
+    $("#status-text").text(text);
+    if (iconClass)
+      $("#loading-icon-container").html(
+        `<i class="${iconClass} fade-icon"></i>`,
+      );
   }
 
-  // =========================================================
-  // STATE & LOGIKA OTORISASI ADMIN
-  // =========================================================
-  window.isAdmin = sessionStorage.getItem('JF_PORTAL_ADMIN') === 'true';
-  window.currentTabType = 'PNS';
-  window.pendingStatusUpdate = null;
-
-  function renderAdminState() {
-    if (window.isAdmin) {
-      $('#btn-admin-login').addClass('d-none');
-      $('#admin-badge-active').removeClass('d-none');
-    } else {
-      $('#btn-admin-login').removeClass('d-none');
-      $('#admin-badge-active').addClass('d-none');
-    }
-  }
-
-  function openAdminModal() {
-    $('#adminLoginError').addClass('d-none');
-    $('#inputAdminPassword').val('');
-    $('#inputAdminPassword').attr('type', 'password');
-    $('#togglePasswordIcon').removeClass('fa-eye-slash').addClass('fa-eye');
-    const modalEl = document.getElementById('adminLoginModal');
-    if (modalEl) {
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.show();
-      setTimeout(() => $('#inputAdminPassword').focus(), 400);
-    }
-  }
-
-  function togglePasswordVisibility() {
-    const input = document.getElementById('inputAdminPassword');
-    const icon = document.getElementById('togglePasswordIcon');
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.classList.remove('fa-eye');
-      icon.classList.add('fa-eye-slash');
-    } else {
-      input.type = 'password';
-      icon.classList.remove('fa-eye-slash');
-      icon.classList.add('fa-eye');
-    }
-  }
-
-  function handleAdminLogin(e) {
-    e.preventDefault();
-    const pw = $('#inputAdminPassword').val();
-    const btn = $('#btnSubmitAdminLogin');
-    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Memverifikasi...');
-    $('#adminLoginError').addClass('d-none');
-
+  var mySessionKey =
+    "USR_" + Math.floor(Math.random() * 10000) + "_" + new Date().getTime();
+  function sendPing() {
     google.script.run
-      .withSuccessHandler(function(res) {
-        btn.prop('disabled', false).html('<i class="fas fa-key me-2"></i>Masuk Mode Admin');
-        if (res && res.valid) {
-          window.isAdmin = true;
-          sessionStorage.setItem('JF_PORTAL_ADMIN', 'true');
-          renderAdminState();
-          const modalEl = document.getElementById('adminLoginModal');
-          if (modalEl) {
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-          }
-          loadData(window.currentTabType || 'PNS');
-          showToastAlert('Mode Admin Aktif! Anda kini dapat mengelola status pegawai.', 'success');
-        } else {
-          $('#adminLoginError').removeClass('d-none');
-        }
+      .withSuccessHandler(function (count) {
+        if (count) $("#live-user-count").text(count);
       })
-      .withFailureHandler(function(err) {
-        btn.prop('disabled', false).html('<i class="fas fa-key me-2"></i>Masuk Mode Admin');
-        $('#adminLoginError').text('Terjadi kendala saat verifikasi: ' + err.message).removeClass('d-none');
-      })
-      .verifyAdminPassword(pw);
+      .userHeartbeat(mySessionKey);
   }
 
-  function adminLogout() {
-    window.isAdmin = false;
-    sessionStorage.removeItem('JF_PORTAL_ADMIN');
-    renderAdminState();
-    loadData(window.currentTabType || 'PNS');
-    showToastAlert('Anda telah keluar dari Mode Admin.', 'info');
-  }
-
-  function konfirmasiUbahStatus(nip, nama, statusBaru, type) {
-    window.pendingStatusUpdate = { nip, nama, statusBaru, type };
-    $('#confirmPegawaiNama').text(nama || "-");
-    $('#confirmPegawaiNip').text(nip || "-");
-    
-    let badgeClass = 'bg-primary text-white';
-    let badgeStyle = 'background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);';
-
-    if (statusBaru === 'Pemberhentian Sementara') {
-      badgeClass = 'bg-warning text-dark';
-      badgeStyle = 'background: #fef3c7 !important; color: #92400e !important; border: 1px solid #fde68a !important; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.15);';
-    } else if (statusBaru === 'Pemberhentian Tetap') {
-      badgeClass = 'bg-danger text-white';
-      badgeStyle = 'background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);';
-    } else if (statusBaru === 'Pensiun') {
-      badgeClass = 'bg-info text-white';
-      badgeStyle = 'background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(14, 165, 233, 0.3);';
-    } else if (statusBaru === 'Meninggal Dunia') {
-      badgeClass = 'bg-dark text-white';
-      badgeStyle = 'background: #0f172a !important; color: #ffffff !important; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.4); border: 1px solid #334155 !important;';
-    }
-    
-    $('#confirmPegawaiStatusBaru')
-      .attr('class', 'badge px-3 py-2 rounded-pill fw-bold ' + badgeClass)
-      .attr('style', badgeStyle)
-      .text(statusBaru);
-    $('#statusUpdateAlert').addClass('d-none').empty();
-    $('#btnExecuteStatusChange').prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
-
-    const modalEl = document.getElementById('statusConfirmModal');
-    if (modalEl) {
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.show();
-    }
-  }
-
-  function eksekusiUbahStatus() {
-    if (!window.pendingStatusUpdate) return;
-    const { nip, nama, statusBaru } = window.pendingStatusUpdate;
-    const btn = $('#btnExecuteStatusChange');
-    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
-
-    // Simulasi respons cepat tanpa menulis/mengubah ke spreadsheet atau mengubah tabel
-    setTimeout(function() {
-      btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
-      const modalEl = document.getElementById('statusConfirmModal');
-      if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-      }
-      showToastAlert(`Aksi perubahan status untuk <strong>${nama || nip}</strong> berhasil diproses.`, 'success');
-    }, 400);
-  }
-
-  function showToastAlert(pesan, jenis) {
-    var notifDiv = document.getElementById('custom-floating-toast');
-    if (!notifDiv) {
-      notifDiv = document.createElement('div');
-      notifDiv.id = 'custom-floating-toast';
-      notifDiv.style.cssText = 'position:fixed; top:20px; right:20px; z-index:99999; max-width:380px; transition:all 0.4s ease;';
-      document.body.appendChild(notifDiv);
-    }
-    var bgClass = (jenis === 'success') ? 'bg-success text-white' : ((jenis === 'danger') ? 'bg-danger text-white' : 'bg-primary text-white');
-    var icon = (jenis === 'success') ? 'fa-check-circle' : ((jenis === 'danger') ? 'fa-exclamation-circle' : 'fa-info-circle');
-    notifDiv.innerHTML = `
-      <div class="toast show align-items-center ${bgClass} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius:12px;">
-        <div class="d-flex p-3 align-items-center">
-          <i class="fas ${icon} fa-lg me-3"></i>
-          <div class="toast-body p-0" style="font-size:0.85rem;">
-            ${pesan}
-          </div>
-          <button type="button" class="btn-close btn-close-white ms-auto me-1" onclick="this.closest('#custom-floating-toast').innerHTML=''" aria-label="Close"></button>
-        </div>
-      </div>`;
-    setTimeout(() => { if (notifDiv) notifDiv.innerHTML = ''; }, 4500);
-  }
-
-$(document).ready(function() {
-    renderAdminState();
+  $(document).ready(function () {
     initLoadSequence();
-    sendPing(); setInterval(sendPing, 60000);
+    sendPing();
+    setInterval(sendPing, 60000);
     applySeasonalTheme();
 
     if ($(window).width() > 768) {
-        $('#sidebar').addClass('active'); 
-        $('#sidebarHandle i').removeClass('fa-chevron-left').addClass('fa-chevron-right');
+      $("#sidebar").addClass("active");
+      $("#sidebarHandle i")
+        .removeClass("fa-chevron-left")
+        .addClass("fa-chevron-right");
     }
 
-    $('#sidebarHandle').off('click').on('click', function() { 
-        $('#sidebar').toggleClass('active'); 
-        $('#sidebarHandle i').toggleClass('fa-chevron-left fa-chevron-right'); 
-    });
+    $("#sidebarHandle")
+      .off("click")
+      .on("click", function () {
+        $("#sidebar").toggleClass("active");
+        $("#sidebarHandle i").toggleClass("fa-chevron-left fa-chevron-right");
+      });
 
     // 3. KODE TOMBOL GARIS TIGA (Khusus HP)
-    $('#mobile-toggle').off('click').on('click', function(e) { 
+    $("#mobile-toggle")
+      .off("click")
+      .on("click", function (e) {
         e.stopPropagation();
-        $('#sidebar').toggleClass('active'); 
-    });
-    
+        $("#sidebar").toggleClass("active");
+      });
+
     // Menutup sidebar jika mengeklik layar luar (area gelap)
-    $(document).on('click', function(e) {
-        if ($(window).width() <= 768 && $('#sidebar').hasClass('active') && !$(e.target).closest('#sidebar').length) {
-            $('#sidebar').removeClass('active');
-        }
-    });
-    
-    $('.filter-input').on('keyup input change', function() {
-        if(!table) return;
-        var id = $(this).attr('id'); 
-        var val = $(this).val(); 
-        var colName = id.replace('fil-', ''); 
-        if (id === 'fil-pangkat' && val.trim() !== "") {
-            var escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            table.column('pangkat:name').search("(^|[^I])" + escaped + "($|[^a-zA-Z0-9])", true, false).draw();
-        } else if (id === 'fil-unit_kerja' && val.trim() !== "") {
-            var escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            table.column('unit_kerja:name').search(/[IVXivx]$/.test(val.trim()) ? escaped + "(?![IVXivx])" : escaped, true, false).draw();
-        } else { table.column(colName + ':name').search(val).draw(); }
+    $(document).on("click", function (e) {
+      if (
+        $(window).width() <= 768 &&
+        $("#sidebar").hasClass("active") &&
+        !$(e.target).closest("#sidebar").length
+      ) {
+        $("#sidebar").removeClass("active");
+      }
     });
 
-    $(document).on('change input blur', '#select-prov-daerah', function() { if (typeof renderRekapKeterisianDaerah === "function") renderRekapKeterisianDaerah(); });
-    $(document).on('change input blur', '#select-prov-unit', function() { if (typeof generateUnitMatrix === "function") generateUnitMatrix(); });
+    $(".filter-input").on("keyup input change", function () {
+      if (!table) return;
+      var id = $(this).attr("id");
+      var val = $(this).val();
+      var colName = id.replace("fil-", "");
+      if (id === "fil-pangkat" && val.trim() !== "") {
+        var escaped = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        table
+          .column("pangkat:name")
+          .search("(^|[^I])" + escaped + "($|[^a-zA-Z0-9])", true, false)
+          .draw();
+      } else if (id === "fil-unit_kerja" && val.trim() !== "") {
+        var escaped = val.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        table
+          .column("unit_kerja:name")
+          .search(
+            /[IVXivx]$/.test(val.trim()) ? escaped + "(?![IVXivx])" : escaped,
+            true,
+            false,
+          )
+          .draw();
+      } else {
+        table
+          .column(colName + ":name")
+          .search(val)
+          .draw();
+      }
+    });
+
+    $(document).on("change input blur", "#select-prov-daerah", function () {
+      if (typeof renderRekapKeterisianDaerah === "function")
+        renderRekapKeterisianDaerah();
+    });
+    $(document).on("change input blur", "#select-prov-unit", function () {
+      if (typeof generateUnitMatrix === "function") generateUnitMatrix();
+    });
+
+    // Inisialisasi tampilan status admin dari sessionStorage
+    updateAdminRoleUI(false);
+
+    // Responsive listener: Load Looker frame jika ukuran layar berubah (misal orientasi HP diputar)
+    var resizeTimer;
+    $(window).on("resize", function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        initLookerFrame();
+      }, 250);
+    });
   });
 
-// =========================================================
-  // FUNGSI INISIALISASI AWAL (LAYAR LOADING)
+  // =========================================================
+  // HELPER PERFORMA: Lazy-load Looker Studio & Matriks Rekap
+  // =========================================================
+  function initLookerFrame() {
+    try {
+      var isMobile = $(window).width() <= 768;
+      var activeId = isMobile ? "#frame-mobile" : "#frame-desktop";
+      var frame = $(activeId);
+      if (frame.length && !frame.attr("src")) {
+        var dSrc = frame.attr("data-src");
+        if (dSrc) frame.attr("src", dSrc);
+      }
+    } catch (e) {
+      console.warn("initLookerFrame error:", e);
+    }
+  }
+
+  window.renderedSubRekap = {};
+  function ensureSubRekapRendered(subKey) {
+    if (window.renderedSubRekap[subKey]) return;
+    window.renderedSubRekap[subKey] = true;
+    try {
+      if (subKey === "daerah") renderFormasiTable();
+      else if (subKey === "unit") generateUnitMatrix();
+      else if (subKey === "jfk") generateJFKMatrix();
+      else if (subKey === "jabatan") generateJabatanMatrix();
+      else if (subKey === "pangkat") generatePangkatMatrix();
+      else if (subKey === "pppk") generatePPPKMatrix();
+      else if (subKey === "gender") generateGenderMatrix();
+    } catch (err) {
+      console.error("Gagal merender rekap " + subKey, err);
+    }
+  }
+
+  function queueBackgroundRekapRender() {
+    var keys = ["daerah", "unit", "jfk", "jabatan", "pangkat", "pppk", "gender"];
+    var idx = 0;
+    function renderNext() {
+      if (idx >= keys.length) return;
+      var k = keys[idx++];
+      if (!window.renderedSubRekap[k]) {
+        ensureSubRekapRendered(k);
+      }
+      setTimeout(renderNext, 250);
+    }
+    setTimeout(renderNext, 800);
+  }
+
+  // =========================================================
+  // FUNGSI INISIALISASI AWAL (LAYAR LOADING CEPAT ALL-IN-ONE)
   // =========================================================
   async function initLoadSequence() {
     try {
-      updateProgress(10, 'Menyiapkan Workspace...', 'fas fa-cog fa-spin'); 
-      await new Promise(r => google.script.run.withSuccessHandler(d => { dashboardStats = d; renderStats(d); r(); }).getDashboardData());
-      
-      updateProgress(35, 'Memuat Data PNS...', 'fas fa-user-tie'); await loadCategory('PNS');
-      updateProgress(65, 'Memuat Data PPPK...', 'fas fa-user-check'); await loadCategory('PPPK');
-      
-      // --- BARU: Tarik dan Hitung Formasi saat Loading Awal ---
-      updateProgress(85, 'Menghitung Status Formasi...', 'fas fa-balance-scale'); 
-      await loadTargetFormasi(); 
-      
-      updateProgress(100, 'Data Siap!', 'fas fa-check-circle text-success');
-      
-      setTimeout(() => { 
-          $('#loading').addClass('hide-loading'); 
-          setTimeout(() => { $('#loading').hide(); }, 800); 
-          
-          calculateAllMaps(); 
-          
-          // ==========================================
-          // PANGGIL SEMUA PEMBUAT TABEL REKAP DI SINI:
-          // ==========================================
-          generateUnitMatrix(); 
-          renderFormasiTable();   // <--- Render langsung tanpa loading
-          generatePangkatMatrix();
-          generatePPPKMatrix();
-          generateJabatanMatrix();
-          generateJFKMatrix();
-          generateGenderMatrix();
-          
-          loadData('PNS');
-          switchMenu('visual'); 
-      }, 800);
-      
-    } catch(e) { 
-      $('#status-text').text('Error. Refresh browser.'); 
+      updateProgress(20, "Menghubungkan ke Server...", "fas fa-sync fa-spin");
+
+      // Panggil fungsi All-In-One (1 roundtrip RPC saja)
+      var initialData = await new Promise((resolve) => {
+        if (
+          google &&
+          google.script &&
+          google.script.run &&
+          typeof google.script.run.getInitialAppData === "function"
+        ) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler((err) => {
+              console.warn("getInitialAppData gagal, beralih ke fallback...", err);
+              resolve(null);
+            })
+            .getInitialAppData();
+        } else {
+          resolve(null);
+        }
+      });
+
+      if (initialData && initialData.pns && initialData.pppk) {
+        updateProgress(65, "Memproses Data Pegawai...", "fas fa-users-cog");
+        dataCache.PNS = (initialData.pns || [])
+          .map((item) => standarisasiPegawai(item, "PNS"))
+          .filter(Boolean);
+        dataCache.PPPK = (initialData.pppk || [])
+          .map((item) => standarisasiPegawai(item, "PPPK"))
+          .filter(Boolean);
+        window.rekapFormasiData = initialData.formasi || [];
+
+        dashboardStats = initialData.stats || {
+          pns: dataCache.PNS.length,
+          pppk: dataCache.PPPK.length,
+        };
+        renderStats(dashboardStats);
+      } else {
+        // Fallback backward-compatible
+        updateProgress(35, "Memuat Data PNS...", "fas fa-user-tie");
+        await loadCategory("PNS");
+        updateProgress(65, "Memuat Data PPPK...", "fas fa-user-check");
+        await loadCategory("PPPK");
+        updateProgress(85, "Menghitung Status Formasi...", "fas fa-balance-scale");
+        await loadTargetFormasi();
+
+        dashboardStats = {
+          pns: dataCache.PNS.length,
+          pppk: dataCache.PPPK.length,
+        };
+        renderStats(dashboardStats);
+      }
+
+      updateProgress(100, "Data Siap!", "fas fa-check-circle text-success");
+
+      setTimeout(() => {
+        $("#loading").addClass("hide-loading");
+        setTimeout(() => {
+          $("#loading").hide();
+        }, 500);
+
+        calculateAllMaps();
+        populateProvinciaDropdowns();
+
+        // Hanya load Looker Studio iframe yang aktif di layar user
+        initLookerFrame();
+
+        // Siapkan tabel utama & buka dashboard
+        loadData("PNS");
+        switchMenu("visual");
+
+        // Jadwalkan rendering tabel rekap di latar belakang agar browser tetap ringan
+        queueBackgroundRekapRender();
+      }, 350);
+    } catch (e) {
+      $("#status-text").text("Error. Refresh browser.");
       console.error(e);
     }
   }
 
   // FUNGSI BARU: Menyimpan data Formasi ke dalam memori (Cache)
   window.rekapFormasiData = [];
-  async function loadTargetFormasi() { 
-      return new Promise(resolve => google.script.run
-        .withSuccessHandler(d => { 
-            window.rekapFormasiData = d || []; 
-            resolve(); 
+  async function loadTargetFormasi() {
+    return new Promise((resolve) =>
+      google.script.run
+        .withSuccessHandler((d) => {
+          window.rekapFormasiData = d || [];
+          resolve();
         })
-        .withFailureHandler(err => {
-            console.error("Gagal memuat Formasi: ", err);
-            resolve(); 
+        .withFailureHandler((err) => {
+          console.error("Gagal memuat Formasi: ", err);
+          resolve();
         })
-        .getRekapKebutuhan()); 
+        .getRekapKebutuhan(),
+    );
   }
 
-  async function loadCategory(type) { 
-      return new Promise(resolve => google.script.run
-        .withSuccessHandler(d => { 
-            let parsed = d || [];
-            let dataBersih = parsed.map(item => standarisasiPegawai(item, type)).filter(Boolean);
-            dataCache[type] = dataBersih; 
-            resolve(); 
+  async function loadCategory(type) {
+    return new Promise((resolve) =>
+      google.script.run
+        .withSuccessHandler((d) => {
+          let parsed = d || [];
+          let dataBersih = parsed
+            .map((item) => standarisasiPegawai(item, type))
+            .filter(Boolean);
+          dataCache[type] = dataBersih;
+          resolve();
         })
-        .withFailureHandler(err => {
-            console.error("Gagal memuat " + type + ": ", err);
-            $('#status-text').html(`<span class="text-danger">Gagal memuat ${type}: ${err.message}</span>`);
-            setTimeout(() => resolve(), 3000); 
+        .withFailureHandler((err) => {
+          console.error("Gagal memuat " + type + ": ", err);
+          $("#status-text").html(
+            `<span class="text-danger">Gagal memuat ${type}: ${err.message}</span>`,
+          );
+          setTimeout(() => resolve(), 3000);
         })
-        .getFormattedData(type)); 
+        .getFormattedData(type),
+    );
   }
 
   function renderStats(d) {
-    var card = (n, l, bClass, icon) => `<div class="col-lg-6 col-md-6 col-6"><div class="card-stat ${bClass}"><div class="icon-main"><i class="fas ${icon}"></i></div><div class="stat-content"><h3>${n}</h3><small>${l}</small></div><i class="fas ${icon} icon-watermark"></i></div></div>`;
-    $('#stats-area').html(card(d.pns, 'PNS', 'card-soft-blue', 'fa-user-tie') + card(d.pppk, 'PPPK', 'card-soft-green', 'fa-user-check'));
+    var card = (n, l, bClass, icon) =>
+      `<div class="col-lg-6 col-md-6 col-6"><div class="card-stat ${bClass}"><div class="icon-main"><i class="fas ${icon}"></i></div><div class="stat-content"><h3>${n}</h3><small>${l}</small></div><i class="fas ${icon} icon-watermark"></i></div></div>`;
+    $("#stats-area").html(
+      card(d.pns, "PNS", "card-soft-blue", "fa-user-tie") +
+        card(d.pppk, "PPPK", "card-soft-green", "fa-user-check"),
+    );
   }
 
   // =========================================================
@@ -366,730 +377,1489 @@ $(document).ready(function() {
   // =========================================================
   function loadData(type) {
     try {
-        var dataSet = dataCache[type] || [];
-        if ($.fn.DataTable.isDataTable('#mainTable')) { $('#mainTable').DataTable().destroy(); }
-        $('#mainTable').empty(); 
-        
-        $('#wrapper-nip, #wrapper-pangkat, #wrapper-jenis').toggle(type !== 'PPNPN' && type !== 'PLT');
-        var pangkatTitle = (type === 'PPPK') ? "Golongan" : "Pangkat"; $('#fil-pangkat').attr('placeholder', pangkatTitle + '...');
-        var nipTitle = (type === 'PPPK') ? "NI PPPK" : ((type === 'CPNS') ? "NIP" : "NIP");
-        
-        var cols = [
-            { title: "NAMA", data: null, defaultContent: "-", name: 'nama', render: (d,t,row) => (row && row.nama) ? row.nama : "-" },
-            { 
-                title: '<i class="fas fa-venus-mars" style="opacity:0.5;" title="Gender"></i>', data: null, defaultContent: "-", className: "text-center align-middle", width: "40px", orderable: false, 
-                render: function(data, typeRender, row) {
-                    if(!row) return "-"; let gen = row._gender;
-                    if (typeRender === 'display') {
-                        if(gen === "Laki-laki") return '<span class="badge rounded-circle shadow-sm" style="background: #eff6ff; color: #3b82f6; padding: 6px 7px; font-size: 0.85rem;" title="Laki-laki"><i class="fas fa-mars"></i></span>';
-                        if(gen === "Perempuan") return '<span class="badge rounded-circle shadow-sm" style="background: #fdf2f8; color: #ec4899; padding: 6px 7px; font-size: 0.85rem;" title="Perempuan"><i class="fas fa-venus"></i></span>';
-                        return '<span class="text-muted">-</span>';
-                    }
-                    return gen;
-                }
+      window.currentActiveType = type || "PNS";
+      var dataSet = dataCache[type] || [];
+      if ($.fn.DataTable.isDataTable("#mainTable")) {
+        $("#mainTable").DataTable().destroy();
+      }
+      $("#mainTable").empty();
+
+      $("#wrapper-nip, #wrapper-pangkat, #wrapper-jenis").toggle(
+        type !== "PPNPN" && type !== "PLT",
+      );
+      var pangkatTitle = type === "PPPK" ? "Golongan" : "Pangkat";
+      $("#fil-pangkat").attr("placeholder", pangkatTitle + "...");
+      var nipTitle =
+        type === "PPPK" ? "NI PPPK" : type === "CPNS" ? "NIP" : "NIP";
+
+      var cols = [
+        {
+          title: "NAMA",
+          data: null,
+          defaultContent: "-",
+          name: "nama",
+          render: function (d, t, row) {
+            if (!row || !row.nama) return "-";
+            let html = `<span class="fw-semibold text-dark">${row.nama}</span>`;
+            if (row._statusKhusus) {
+              html += `<div class="mt-1">${getStatusBadgeHtml(row._statusKhusus)}</div>`;
             }
-        ];
-        
-        if(type !== 'PPNPN' && type !== 'PLT') {
-            cols.push({ title: nipTitle.toUpperCase(), data: null, defaultContent: "-", name: 'nip', className: 'text-center', visible : false, render: function(d,t,row) { return row.nip; } });
-            cols.push({ title: pangkatTitle.toUpperCase(), data: null, defaultContent: "-", name: 'pangkat', className: 'text-center', render: function(d,t,row) { return row._pangkat; } });
-            cols.push({ title: "WILAYAH", data: null, defaultContent: "-", name: 'jenis_jabatan', className: 'text-center', render: function(d,t,row) { return row._wilayah; } });
-        }
-        
-        cols.push({ title: "JABATAN", data: null, defaultContent: "-", name: 'jabatan', render: function(d,t,row) { return row.jabatan; } });
-        cols.push({ title: "UNIT KERJA", data: null, defaultContent: "-", name: 'unit_kerja', render: (d,t,row) => (row && row.unit_kerja) ? row.unit_kerja : "-" });
-        
-        window.currentTabType = type;
+            return html;
+          },
+        },
+        {
+          title:
+            '<i class="fas fa-venus-mars" style="opacity:0.5;" title="Gender"></i>',
+          data: null,
+          defaultContent: "-",
+          className: "text-center align-middle",
+          width: "40px",
+          orderable: false,
+          render: function (data, typeRender, row) {
+            if (!row) return "-";
+            let gen = row._gender;
+            if (typeRender === "display") {
+              if (gen === "Laki-laki")
+                return '<span class="badge rounded-circle shadow-sm" style="background: #eff6ff; color: #3b82f6; padding: 6px 7px; font-size: 0.85rem;" title="Laki-laki"><i class="fas fa-mars"></i></span>';
+              if (gen === "Perempuan")
+                return '<span class="badge rounded-circle shadow-sm" style="background: #fdf2f8; color: #ec4899; padding: 6px 7px; font-size: 0.85rem;" title="Perempuan"><i class="fas fa-venus"></i></span>';
+              return '<span class="text-muted">-</span>';
+            }
+            return gen;
+          },
+        },
+      ];
+
+      if (type !== "PPNPN" && type !== "PLT") {
         cols.push({
-            title: "AKSI", data: null, defaultContent: "", className: "text-center align-middle", orderable: false, width: "80px",
-            render: function(data, typeRender, row) {
-                if (typeRender !== 'display' || !row) return "";
-                var rawNip = row.nip ? String(row.nip).replace(/[^a-zA-Z0-9]/g, '') : "";
-                var rawNama = (row.nama || "").replace(/'/g, "\\'");
-                
-                if (!window.isAdmin) {
-                    return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${rawNip}')" title="Edit Data Pegawai"><i class="fa-solid fa-pen-to-square"></i></button>`;
-                }
+          title: nipTitle.toUpperCase(),
+          data: null,
+          defaultContent: "-",
+          name: "nip",
+          className: "text-center",
+          visible: false,
+          render: function (d, t, row) {
+            return row.nip;
+          },
+        });
+        cols.push({
+          title: pangkatTitle.toUpperCase(),
+          data: null,
+          defaultContent: "-",
+          name: "pangkat",
+          className: "text-center",
+          render: function (d, t, row) {
+            return row._pangkat;
+          },
+        });
+        cols.push({
+          title: "WILAYAH",
+          data: null,
+          defaultContent: "-",
+          name: "jenis_jabatan",
+          className: "text-center",
+          render: function (d, t, row) {
+            return row._wilayah;
+          },
+        });
+      }
 
-                return `
-                <div class="dropdown position-static">
-                  <button class="btn-action-dots" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport" title="Pilihan Tindakan Admin">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
-                  <ul class="dropdown-menu dropdown-menu-end action-dropdown-menu" style="z-index: 1055;">
-                    <li><div class="action-dropdown-header"><i class="fas fa-user-gear me-1"></i>Aksi Pegawai</div></li>
-                    <li><a class="action-dropdown-item item-edit" href="javascript:void(0)" onclick="bukaModalEdit('${rawNip}')"><i class="fas fa-pen-to-square"></i> <span>Edit Data Pegawai</span></a></li>
-                    <li><hr class="dropdown-divider my-1" style="border-color: #f1f5f9;"></li>
-                    <li><div class="action-dropdown-header"><i class="fas fa-clock-rotate-left me-1"></i>Update Status Pegawai</div></li>
-                    <li><a class="action-dropdown-item item-sementara" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pemberhentian Sementara', '${type}')"><i class="fas fa-pause-circle"></i> <span>Pemberhentian Sementara</span></a></li>
-                    <li><a class="action-dropdown-item item-tetap" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pemberhentian Tetap', '${type}')"><i class="fas fa-times-circle"></i> <span>Pemberhentian Tetap</span></a></li>
-                    <li><a class="action-dropdown-item item-pensiun" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Pensiun', '${type}')"><i class="fas fa-user-clock"></i> <span>Pensiun</span></a></li>
-                    <li><a class="action-dropdown-item item-meninggal" href="javascript:void(0)" onclick="konfirmasiUbahStatus('${rawNip}', '${rawNama}', 'Meninggal Dunia', '${type}')"><i class="fas fa-dove"></i> <span>Meninggal Dunia</span></a></li>
-                  </ul>
-                </div>`;
+      cols.push({
+        title: "JABATAN",
+        data: null,
+        defaultContent: "-",
+        name: "jabatan",
+        render: function (d, t, row) {
+          return row.jabatan;
+        },
+      });
+      cols.push({
+        title: "UNIT KERJA",
+        data: null,
+        defaultContent: "-",
+        name: "unit_kerja",
+        render: (d, t, row) => (row && row.unit_kerja ? row.unit_kerja : "-"),
+      });
+
+      cols.push({
+        title: "AKSI",
+        data: null,
+        defaultContent: "",
+        className: "text-center align-middle",
+        orderable: false,
+        width: "80px",
+        render: function (data, typeRender, row) {
+          if (typeRender === "display" && row) {
+            if (isUserAdmin()) {
+              return renderAdminDropdownAksi(row);
+            } else {
+              return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${row.nip || "ID-1001"}')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
             }
-        });
+          }
+          return "";
+        },
+      });
 
-        table = $('#mainTable').DataTable({ 
-            data: dataSet, columns: cols, pageLength: 25, lengthChange: true, lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]], order: [], columnDefs: [{ orderable: false, targets: '_all' }], 
-            dom: "<'table-scroll-area't><'row dt-footer-row'<'col-md-6 d-flex align-items-center'i><'col-md-6 d-flex justify-content-end align-items-center gap-3'lp>>", 
-            language: { paginate: { previous: '<i class="fas fa-chevron-left"></i>', next: '<i class="fas fa-chevron-right"></i>' }, lengthMenu: "Show _MENU_ entries" }
-        });
-    } catch(e) { console.error("Error DataTable Load:", e); }
+      table = $("#mainTable").DataTable({
+        data: dataSet,
+        columns: cols,
+        pageLength: 25,
+        lengthChange: true,
+        lengthMenu: [
+          [10, 25, 50, 100, -1],
+          [10, 25, 50, 100, "All"],
+        ],
+        order: [],
+        columnDefs: [{ orderable: false, targets: "_all" }],
+        dom: "<'table-scroll-area't><'row dt-footer-row'<'col-md-6 d-flex align-items-center'i><'col-md-6 d-flex justify-content-end align-items-center gap-3'lp>>",
+        language: {
+          paginate: {
+            previous: '<i class="fas fa-chevron-left"></i>',
+            next: '<i class="fas fa-chevron-right"></i>',
+          },
+          lengthMenu: "Show _MENU_ entries",
+        },
+      });
+    } catch (e) {
+      console.error("Error DataTable Load:", e);
+    }
   }
 
-  function changeTab(type) { 
-      try {
-          $('.custom-tabs-container .custom-tab-btn').removeClass('active'); 
-          $('#btn-'+type).addClass('active'); 
-          loadData(type); 
-      } catch(e) { console.error("Error changeTab:", e); }
+  function changeTab(type) {
+    try {
+      window.currentActiveType = type;
+      $(".custom-tabs-container .custom-tab-btn").removeClass("active");
+      $("#btn-" + type).addClass("active");
+      loadData(type);
+    } catch (e) {
+      console.error("Error changeTab:", e);
+    }
   }
 
   // =========================================================
   // 4. FUNGSI NAVIGASI PINDAH HALAMAN (MENU KIRI)
   // =========================================================
   function switchMenu(menu) {
-        $('.main-page').hide();
-        $('#sidebar ul li a').removeClass('active');
-        $('#menu-' + menu).addClass('active');
+    $(".main-page").hide();
+    $("#sidebar ul li a").removeClass("active");
+    $("#menu-" + menu).addClass("active");
 
-        if (menu === 'visual') {
-            $('#page-visual').show();
-        } else if (menu === 'data') {
-            $('#page-data').show();
-        } else if (menu === 'rekap') {
-            $('#page-rekap').show();
-        } else if (menu === 'formasi') {
-            $('#page-formasi').show();
-            loadRekapFormasi(); // Langsung memuat data saat menu diklik
-        }
-
-        // Menutup sidebar jika di HP
-        if ($(window).width() <= 768) {
-            $('#sidebar').removeClass('active');
-        }
+    if (menu === "visual") {
+      $("#page-visual").show();
+      initLookerFrame();
+    } else if (menu === "data") {
+      $("#page-data").show();
+    } else if (menu === "rekap") {
+      $("#page-rekap").show();
+      ensureSubRekapRendered("daerah");
+    } else if (menu === "formasi") {
+      $("#page-formasi").show();
+      loadRekapFormasi(); // Langsung memuat data saat menu diklik
     }
+
+    // Menutup sidebar jika di HP
+    if ($(window).width() <= 768) {
+      $("#sidebar").removeClass("active");
+    }
+  }
 
   // =========================================================
   // 5. FUNGSI HITUNGAN MATEMATIKA UNTUK REKAPITULASI
   // =========================================================
   function normalizeUnitKerja(u) {
-      if (!u) return "";
-      let res = String(u).toUpperCase().replace(/BAGIAN TATA USAHA, INSPEKTORAT UTAMA/gi, "INSPEKTORAT UTAMA > BAGIAN TATA USAHA").replace(/SEKRETARIAT UTAMA > PUSAT/gi, "PUSAT").replace("PUSAT DATA, INFORMASI, DAN KOMUNIKASI", "PUSAT DATA, INFORMASI DAN KOMUNIKASI");
-      if (res.includes("SUBBAGIAN TATA USAHA PUSAT DATA") || res.includes("SUBBAG TATA USAHA PUSAT DATA")) res = "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN > SUBBAGIAN TATA USAHA";
-      if (res.includes("SUBBAGIAN TATA USAHA PUSAT PENDIDIKAN") || res.includes("SUBBAG TATA USAHA PUSAT PENDIDIKAN")) res = "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA > SUBBAGIAN TATA USAHA";
-      if (res.includes("SUBBAGIAN TATA USAHA PUSAT PEMBINAAN") || res.includes("SUBBAG TATA USAHA PUSAT PEMBINAAN")) res = "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN > SUBBAGIAN TATA USAHA";
-      if (res.includes("DIREKTORAT") && (res.includes("TATA USAHA") || res.includes("SUBBAGIAN") || res.includes("TU "))) {
-          if (res.includes("SISTEM") || res.includes("STRATEGI")) res = "DEPUTI BIDANG SISTEM DAN STRATEGI > SUBBAGIAN TATA USAHA DEPUTI BIDANG SISTEM DAN STRATEGI";
-          else if (res.includes("PENCEGAHAN") || res.includes("MITIGASI") || res.includes("KESIAPSIAGAAN") || res.includes("PERINGATAN DINI")) res = "DEPUTI BIDANG PENCEGAHAN > SUBBAGIAN TATA USAHA DEPUTI BIDANG PENCEGAHAN";
-          else if (res.includes("DARURAT") || res.includes("WILAYAH") || res.includes("OPERASI")) res = "DEPUTI BIDANG PENANGANAN DARURAT > SUBBAGIAN TATA USAHA DEPUTI BIDANG PENANGANAN DARURAT";
-          else if (res.includes("REHABILITASI") || res.includes("REKONSTRUKSI")) res = "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI > SUBBAGIAN TATA USAHA DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI";
-          else if (res.includes("LOGISTIK") || res.includes("PERALATAN")) res = "DEPUTI BIDANG LOGISTIK DAN PERALATAN > SUBBAGIAN TATA USAHA DEPUTI BIDANG LOGISTIK DAN PERALATAN";
-      }
-      return clean(res);
+    if (!u) return "";
+    let res = String(u)
+      .toUpperCase()
+      .replace(
+        /BAGIAN TATA USAHA, INSPEKTORAT UTAMA/gi,
+        "INSPEKTORAT UTAMA > BAGIAN TATA USAHA",
+      )
+      .replace(/SEKRETARIAT UTAMA > PUSAT/gi, "PUSAT")
+      .replace(
+        "PUSAT DATA, INFORMASI, DAN KOMUNIKASI",
+        "PUSAT DATA, INFORMASI DAN KOMUNIKASI",
+      );
+    if (
+      res.includes("SUBBAGIAN TATA USAHA PUSAT DATA") ||
+      res.includes("SUBBAG TATA USAHA PUSAT DATA")
+    )
+      res =
+        "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN > SUBBAGIAN TATA USAHA";
+    if (
+      res.includes("SUBBAGIAN TATA USAHA PUSAT PENDIDIKAN") ||
+      res.includes("SUBBAG TATA USAHA PUSAT PENDIDIKAN")
+    )
+      res =
+        "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA > SUBBAGIAN TATA USAHA";
+    if (
+      res.includes("SUBBAGIAN TATA USAHA PUSAT PEMBINAAN") ||
+      res.includes("SUBBAG TATA USAHA PUSAT PEMBINAAN")
+    )
+      res =
+        "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN > SUBBAGIAN TATA USAHA";
+    if (
+      res.includes("DIREKTORAT") &&
+      (res.includes("TATA USAHA") ||
+        res.includes("SUBBAGIAN") ||
+        res.includes("TU "))
+    ) {
+      if (res.includes("SISTEM") || res.includes("STRATEGI"))
+        res =
+          "DEPUTI BIDANG SISTEM DAN STRATEGI > SUBBAGIAN TATA USAHA DEPUTI BIDANG SISTEM DAN STRATEGI";
+      else if (
+        res.includes("PENCEGAHAN") ||
+        res.includes("MITIGASI") ||
+        res.includes("KESIAPSIAGAAN") ||
+        res.includes("PERINGATAN DINI")
+      )
+        res =
+          "DEPUTI BIDANG PENCEGAHAN > SUBBAGIAN TATA USAHA DEPUTI BIDANG PENCEGAHAN";
+      else if (
+        res.includes("DARURAT") ||
+        res.includes("WILAYAH") ||
+        res.includes("OPERASI")
+      )
+        res =
+          "DEPUTI BIDANG PENANGANAN DARURAT > SUBBAGIAN TATA USAHA DEPUTI BIDANG PENANGANAN DARURAT";
+      else if (res.includes("REHABILITASI") || res.includes("REKONSTRUKSI"))
+        res =
+          "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI > SUBBAGIAN TATA USAHA DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI";
+      else if (res.includes("LOGISTIK") || res.includes("PERALATAN"))
+        res =
+          "DEPUTI BIDANG LOGISTIK DAN PERALATAN > SUBBAGIAN TATA USAHA DEPUTI BIDANG LOGISTIK DAN PERALATAN";
+    }
+    return clean(res);
   }
 
   function calculateAllMaps() {
     try {
-      globalMaps.jabatan = {}; 
-      const procJab = (arr, key) => { 
-          (arr||[]).forEach(r => { 
-              if(!r) return; 
-              var j = r._wilayah;
-              if(!globalMaps.jabatan[j]) globalMaps.jabatan[j] = { pns:0, pppk:0 }; 
-              globalMaps.jabatan[j][key]++; 
-          }); 
+      globalMaps.jabatan = {};
+      const procJab = (arr, key) => {
+        (arr || []).forEach((r) => {
+          if (!r) return;
+          var j = r._wilayah;
+          if (!globalMaps.jabatan[j])
+            globalMaps.jabatan[j] = { pns: 0, pppk: 0 };
+          globalMaps.jabatan[j][key]++;
+        });
       };
-      procJab(dataCache.PNS, 'pns'); procJab(dataCache.PPPK, 'pppk');
+      procJab(dataCache.PNS, "pns");
+      procJab(dataCache.PPPK, "pppk");
 
-      globalMaps.jfk = {}; 
-      const procJfk = (arr, key) => { 
-          (arr||[]).forEach(r => { 
-              if(!r) return; 
-              var j = clean(r.jabatan || ""); 
-              if(j.includes("ANALIS KEBENCANAAN") || j.includes("PENATA PENANGGULANGAN BENCANA")) { 
-                  if(!globalMaps.jfk[j]) globalMaps.jfk[j] = { pns:0, pppk:0 }; 
-                  globalMaps.jfk[j][key]++; 
-              }
-          }); 
+      globalMaps.jfk = {};
+      const procJfk = (arr, key) => {
+        (arr || []).forEach((r) => {
+          if (!r) return;
+          var j = clean(r.jabatan || "");
+          if (
+            j.includes("ANALIS KEBENCANAAN") ||
+            j.includes("PENATA PENANGGULANGAN BENCANA")
+          ) {
+            if (!globalMaps.jfk[j]) globalMaps.jfk[j] = { pns: 0, pppk: 0 };
+            globalMaps.jfk[j][key]++;
+          }
+        });
       };
-      procJfk(dataCache.PNS, 'pns'); procJfk(dataCache.PPPK, 'pppk');
+      procJfk(dataCache.PNS, "pns");
+      procJfk(dataCache.PPPK, "pppk");
 
-      globalMaps.pangkat = {}; 
-      const procPkt = (list, key) => { 
-          (list||[]).forEach(r => { 
-              if(!r) return; 
-              var p = r._pangkat; 
-              if (p && p !== "-") { 
-                  if (!globalMaps.pangkat[p]) globalMaps.pangkat[p] = { pns: [] }; 
-                  globalMaps.pangkat[p][key].push(r); 
-              } 
-          }); 
+      globalMaps.pangkat = {};
+      const procPkt = (list, key) => {
+        (list || []).forEach((r) => {
+          if (!r) return;
+          var p = r._pangkat;
+          if (p && p !== "-") {
+            if (!globalMaps.pangkat[p]) globalMaps.pangkat[p] = { pns: [] };
+            globalMaps.pangkat[p][key].push(r);
+          }
+        });
       };
-      procPkt(dataCache.PNS, 'pns'); 
+      procPkt(dataCache.PNS, "pns");
 
-      globalMaps.pppk = {}; 
-      if(dataCache.PPPK) { 
-          dataCache.PPPK.forEach(r => { 
-              if(!r) return; 
-              var g = r._pangkat === "-" ? "PPPK Paruh Waktu" : r._pangkat; 
-              if (!globalMaps.pppk[g]) globalMaps.pppk[g] = []; 
-              globalMaps.pppk[g].push(r); 
-          }); 
+      globalMaps.pppk = {};
+      if (dataCache.PPPK) {
+        dataCache.PPPK.forEach((r) => {
+          if (!r) return;
+          var g = r._pangkat === "-" ? "PPPK Paruh Waktu" : r._pangkat;
+          if (!globalMaps.pppk[g]) globalMaps.pppk[g] = [];
+          globalMaps.pppk[g].push(r);
+        });
       }
 
       globalMaps.gender = { PNS: { L: 0, P: 0 }, PPPK: { L: 0, P: 0 } };
       const procGender = (arr, key) => {
-          (arr||[]).forEach(r => {
-              if(!r) return; 
-              if (r._gender === "Laki-laki") globalMaps.gender[key].L++;
-              else if (r._gender === "Perempuan") globalMaps.gender[key].P++;
-          });
+        (arr || []).forEach((r) => {
+          if (!r) return;
+          if (r._gender === "Laki-laki") globalMaps.gender[key].L++;
+          else if (r._gender === "Perempuan") globalMaps.gender[key].P++;
+        });
       };
-      procGender(dataCache.PNS, 'PNS'); procGender(dataCache.PPPK, 'PPPK');
-    } catch(e) { console.error("Error calculateAllMaps:", e); }
+      procGender(dataCache.PNS, "PNS");
+      procGender(dataCache.PPPK, "PPPK");
+    } catch (e) {
+      console.error("Error calculateAllMaps:", e);
+    }
   }
-  
+
   function generateUnitMatrix() {
     try {
-      var selectedUnitFilter = clean($('#select-prov-unit').val() || "ALL").replace(/^PROVINSI\s+/i, '').trim();
-      var unitMap = {}; 
-      var sortOrder = [ "INSPEKTORAT UTAMA", "SEKRETARIAT UTAMA", "DEPUTI BIDANG SISTEM DAN STRATEGI", "DEPUTI BIDANG PENCEGAHAN", "DEPUTI BIDANG PENANGANAN DARURAT", "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI", "DEPUTI BIDANG LOGISTIK DAN PERALATAN", "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN", "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA", "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN", "BPBD Provinsi Aceh", "BPBD Provinsi Sumatera Utara" ];
+      var selectedUnitFilter = clean($("#select-prov-unit").val() || "ALL")
+        .replace(/^PROVINSI\s+/i, "")
+        .trim();
+      var unitMap = {};
+      var sortOrder = [
+        "INSPEKTORAT UTAMA",
+        "SEKRETARIAT UTAMA",
+        "DEPUTI BIDANG SISTEM DAN STRATEGI",
+        "DEPUTI BIDANG PENCEGAHAN",
+        "DEPUTI BIDANG PENANGANAN DARURAT",
+        "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI",
+        "DEPUTI BIDANG LOGISTIK DAN PERALATAN",
+        "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN",
+        "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA",
+        "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN",
+        "BPBD Provinsi Aceh",
+        "BPBD Provinsi Sumatera Utara",
+      ];
 
       function distribute(list, key) {
-        (list || []).forEach(r => {
+        (list || []).forEach((r) => {
           if (!r) return;
           var rawWilayah = r._wilayah;
-          var rawStr = normalizeUnitKerja(r.unit_kerja || r.kabupaten || ""); 
-          var u = rawStr.split(" > "); var p = clean(u[0]);
+          var rawStr = normalizeUnitKerja(r.unit_kerja || r.kabupaten || "");
+          var u = rawStr.split(" > ");
+          var p = clean(u[0]);
           if (!p || p.includes("BADAN NASIONAL")) return;
 
           if (selectedUnitFilter !== "ALL" && selectedUnitFilter !== "") {
             if (selectedUnitFilter === "BNPB") {
-              var isPusat = (rawWilayah === "PUSAT") || p.includes("DEPUTI") || p.includes("SEKRETARIAT") || p.includes("INSPEKTORAT") || p.includes("PUSAT");
+              var isPusat =
+                rawWilayah === "PUSAT" ||
+                p.includes("DEPUTI") ||
+                p.includes("SEKRETARIAT") ||
+                p.includes("INSPEKTORAT") ||
+                p.includes("PUSAT");
               if (!isPusat) return;
             } else {
-              var isMatch = (rawWilayah === selectedUnitFilter) || (rawWilayah.includes(selectedUnitFilter)) || (selectedUnitFilter.includes(rawWilayah)) || (p.includes(selectedUnitFilter));
-              if (!isMatch) return; 
+              var isMatch =
+                rawWilayah === selectedUnitFilter ||
+                rawWilayah.includes(selectedUnitFilter) ||
+                selectedUnitFilter.includes(rawWilayah) ||
+                p.includes(selectedUnitFilter);
+              if (!isMatch) return;
             }
           }
-          var type = key; 
-          if (key === 'pns' && r._pangkat !== "-" && !r._pangkat.includes("/")) type = 'tni';
-          var finalP = p, finalC = null;
-          if (!unitMap[finalP]) unitMap[finalP] = { label: u[0].trim(), pns: [], cpns: [], pppk: [], ppnpn: [], tni: [], child: {} };
+          var type = key;
+          if (key === "pns" && r._pangkat !== "-" && !r._pangkat.includes("/"))
+            type = "tni";
+          var finalP = p,
+            finalC = null;
+          if (!unitMap[finalP])
+            unitMap[finalP] = {
+              label: u[0].trim(),
+              pns: [],
+              cpns: [],
+              pppk: [],
+              ppnpn: [],
+              tni: [],
+              child: {},
+            };
           if (u.length > 1) {
             finalC = clean(u[1]);
             if (!unitMap[finalP].child[finalC]) {
               let childLabel = u[1].trim();
-              if (/(TATA USAHA|SUBBAGIAN|BAGIAN|KELOMPOK KERJA|SEKSI)/i.test(childLabel) && !childLabel.includes("[")) childLabel = `${childLabel} [${unitMap[finalP].label}]`;
-              unitMap[finalP].child[finalC] = { label: childLabel, pns: [], cpns: [], pppk: [], ppnpn: [], tni: [] };
+              if (
+                /(TATA USAHA|SUBBAGIAN|BAGIAN|KELOMPOK KERJA|SEKSI)/i.test(
+                  childLabel,
+                ) &&
+                !childLabel.includes("[")
+              )
+                childLabel = `${childLabel} [${unitMap[finalP].label}]`;
+              unitMap[finalP].child[finalC] = {
+                label: childLabel,
+                pns: [],
+                cpns: [],
+                pppk: [],
+                ppnpn: [],
+                tni: [],
+              };
             }
             unitMap[finalP].child[finalC][type].push(r);
-          } else { unitMap[finalP][type].push(r); }
+          } else {
+            unitMap[finalP][type].push(r);
+          }
         });
       }
 
-      distribute(dataCache.PNS, 'pns'); distribute(dataCache.CPNS, 'cpns'); distribute(dataCache.PPPK, 'pppk'); 
+      distribute(dataCache.PNS, "pns");
+      distribute(dataCache.CPNS, "cpns");
+      distribute(dataCache.PPPK, "pppk");
 
-      var dtTable = $('#tbl-unit-matrix');
-      if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-      var tbody = dtTable.find('tbody').empty();
+      var dtTable = $("#tbl-unit-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var tbody = dtTable.find("tbody").empty();
 
       var sortedK = Object.keys(unitMap).sort((a, b) => {
-        if (a === "BADAN GIZI NASIONAL") return 1; if (b === "BADAN GIZI NASIONAL") return -1;
-        var iA = sortOrder.findIndex(item => a.toLowerCase().includes(item.toLowerCase()));
-        var iB = sortOrder.findIndex(item => b.toLowerCase().includes(item.toLowerCase()));
+        if (a === "BADAN GIZI NASIONAL") return 1;
+        if (b === "BADAN GIZI NASIONAL") return -1;
+        var iA = sortOrder.findIndex((item) =>
+          a.toLowerCase().includes(item.toLowerCase()),
+        );
+        var iB = sortOrder.findIndex((item) =>
+          b.toLowerCase().includes(item.toLowerCase()),
+        );
         if (iA !== -1 && iB !== -1) return iA - iB;
-        return iA !== -1 ? -1 : (iB !== -1 ? 1 : a.localeCompare(b));
+        return iA !== -1 ? -1 : iB !== -1 ? 1 : a.localeCompare(b);
       });
 
       var grand = { pns: 0, pppk: 0, total: 0 };
 
       sortedK.forEach((pk) => {
-        var p = unitMap[pk]; 
-        var allPns = [...p.pns, ...p.cpns]; var allPppk = [...p.pppk];
-        Object.keys(p.child).forEach(ck => { 
-          var c = p.child[ck]; allPns = allPns.concat(c.pns, c.cpns); allPppk = allPppk.concat(c.pppk);
+        var p = unitMap[pk];
+        var allPns = [...p.pns, ...p.cpns];
+        var allPppk = [...p.pppk];
+        Object.keys(p.child).forEach((ck) => {
+          var c = p.child[ck];
+          allPns = allPns.concat(c.pns, c.cpns);
+          allPppk = allPppk.concat(c.pppk);
         });
 
-        var pnsCount = allPns.length; var pppkCount = allPppk.length; var subTotalGrup = pnsCount + pppkCount;
+        var pnsCount = allPns.length;
+        var pppkCount = allPppk.length;
+        var subTotalGrup = pnsCount + pppkCount;
         if (subTotalGrup === 0) return;
-        var safeKey = String(pk).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
-        var clickPns = pnsCount > 0 ? `<span class="clickable-num num-pns" onclick='showDrillUnitCat("${safeKey}", "pns")'>${pnsCount}</span>` : `<span class="num-zero">0</span>`;
-        var clickPppk = pppkCount > 0 ? `<span class="clickable-num num-pppk" onclick='showDrillUnitCat("${safeKey}", "pppk")'>${pppkCount}</span>` : `<span class="num-zero">0</span>`;
-        var clickTot = subTotalGrup > 0 ? `<span class="clickable-num num-total" onclick='showDrillUnitCat("${safeKey}", "all")'>${subTotalGrup}</span>` : `<span class="num-zero">0</span>`;
+        var safeKey = String(pk).replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
-        tbody.append(`<tr><td class="ps-3 fw-bold">${p.label.toUpperCase()}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`);
-        grand.pns += pnsCount; grand.pppk += pppkCount; grand.total += subTotalGrup;
+        var clickPns =
+          pnsCount > 0
+            ? `<span class="clickable-num num-pns" onclick='showDrillUnitCat("${safeKey}", "pns")'>${pnsCount}</span>`
+            : `<span class="num-zero">0</span>`;
+        var clickPppk =
+          pppkCount > 0
+            ? `<span class="clickable-num num-pppk" onclick='showDrillUnitCat("${safeKey}", "pppk")'>${pppkCount}</span>`
+            : `<span class="num-zero">0</span>`;
+        var clickTot =
+          subTotalGrup > 0
+            ? `<span class="clickable-num num-total" onclick='showDrillUnitCat("${safeKey}", "all")'>${subTotalGrup}</span>`
+            : `<span class="num-zero">0</span>`;
+
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${p.label.toUpperCase()}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`,
+        );
+        grand.pns += pnsCount;
+        grand.pppk += pppkCount;
+        grand.total += subTotalGrup;
       });
 
-      tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillUnitCat("ALL_UNIT", "pns")'>${grand.pns}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillUnitCat("ALL_UNIT", "pppk")'>${grand.pppk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillUnitCat("ALL_UNIT", "all")'>${grand.total}</span></td></tr>`);
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillUnitCat("ALL_UNIT", "pns")'>${grand.pns}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillUnitCat("ALL_UNIT", "pppk")'>${grand.pppk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillUnitCat("ALL_UNIT", "all")'>${grand.total}</span></td></tr>`,
+      );
       window.currentUnitMap = unitMap;
-      dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch (e) { console.error("Error generateUnitMatrix:", e); }
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generateUnitMatrix:", e);
+    }
   }
 
-  window.showDrillUnitCat = function(pKey, category) {
-      var list = []; var title = ""; var catsToFetch = [];
-      if (category === 'pns') catsToFetch = ['pns', 'cpns']; else if (category === 'pppk') catsToFetch = ['pppk']; else catsToFetch = ['pns', 'cpns', 'pppk'];
-      
-      if (pKey === "ALL_UNIT") {
-          title = category === 'pns' ? 'PNS (Semua Unit)' : (category === 'pppk' ? 'PPPK (Semua Unit)' : 'Seluruh Pegawai (Semua Unit)');
-          Object.keys(window.currentUnitMap || {}).forEach(k => { var p = window.currentUnitMap[k]; catsToFetch.forEach(cat => { if (p[cat]) list = list.concat(p[cat]); }); Object.keys(p.child || {}).forEach(ck => { catsToFetch.forEach(cat => { if (p.child[ck][cat]) list = list.concat(p.child[ck][cat]); }); }); });
-      } else {
-          var p = window.currentUnitMap[pKey]; if (!p) return;
-          title = category === 'pns' ? 'PNS - ' + p.label : (category === 'pppk' ? 'PPPK - ' + p.label : 'Seluruh Pegawai - ' + p.label);
-          catsToFetch.forEach(cat => { if (p[cat]) list = list.concat(p[cat]); });
-          Object.keys(p.child || {}).forEach(ck => { catsToFetch.forEach(cat => { if (p.child[ck][cat]) list = list.concat(p.child[ck][cat]); }); });
-      }
-      renderModal(list, category === 'all' ? 'pns' : category, title);
+  window.showDrillUnitCat = function (pKey, category) {
+    var list = [];
+    var title = "";
+    var catsToFetch = [];
+    if (category === "pns") catsToFetch = ["pns", "cpns"];
+    else if (category === "pppk") catsToFetch = ["pppk"];
+    else catsToFetch = ["pns", "cpns", "pppk"];
+
+    if (pKey === "ALL_UNIT") {
+      title =
+        category === "pns"
+          ? "PNS (Semua Unit)"
+          : category === "pppk"
+            ? "PPPK (Semua Unit)"
+            : "Seluruh Pegawai (Semua Unit)";
+      Object.keys(window.currentUnitMap || {}).forEach((k) => {
+        var p = window.currentUnitMap[k];
+        catsToFetch.forEach((cat) => {
+          if (p[cat]) list = list.concat(p[cat]);
+        });
+        Object.keys(p.child || {}).forEach((ck) => {
+          catsToFetch.forEach((cat) => {
+            if (p.child[ck][cat]) list = list.concat(p.child[ck][cat]);
+          });
+        });
+      });
+    } else {
+      var p = window.currentUnitMap[pKey];
+      if (!p) return;
+      title =
+        category === "pns"
+          ? "PNS - " + p.label
+          : category === "pppk"
+            ? "PPPK - " + p.label
+            : "Seluruh Pegawai - " + p.label;
+      catsToFetch.forEach((cat) => {
+        if (p[cat]) list = list.concat(p[cat]);
+      });
+      Object.keys(p.child || {}).forEach((ck) => {
+        catsToFetch.forEach((cat) => {
+          if (p.child[ck][cat]) list = list.concat(p.child[ck][cat]);
+        });
+      });
+    }
+    renderModal(list, category === "all" ? "pns" : category, title);
   };
 
   function switchSubRekap(subKey) {
-    $('.sub-rekap-panel').hide(); $('.rekap-sub-nav .nav-link').removeClass('active');
-    $('#panel-rekap-' + subKey).fadeIn(200); $('#tab-btn-' + subKey).addClass('active');
+    $(".sub-rekap-panel").hide();
+    $(".rekap-sub-nav .nav-link").removeClass("active");
+    $("#panel-rekap-" + subKey).fadeIn(200);
+    $("#tab-btn-" + subKey).addClass("active");
     populateProvinciaDropdowns();
+    ensureSubRekapRendered(subKey);
   }
 
   function populateProvinciaDropdowns() {
     try {
-      var selectDaerah = $('#select-prov-daerah'); var selectUnit = $('#select-prov-unit'); if (!selectDaerah.length) return;
-      var currentValDaerah = selectDaerah.val() || "ALL"; var currentValUnit = selectUnit.val() || "ALL";
+      var selectUnit = $("#select-prov-unit");
+      if (!selectUnit.length) return; // Mencegah error jika elemen tidak ditemukan
+
+      var currentValUnit = selectUnit.val() || "ALL";
       var provSet = new Set();
-      
-      ['PNS', 'CPNS', 'PPPK'].forEach(cat => {
-        (dataCache[cat] || []).forEach(r => {
-          if (!r) return; var prov = r._wilayah;
-          if (prov && prov !== "-" && !prov.includes("TERDEFINISI") && prov !== "JFT" && prov !== "JS" && prov !== "JFU") provSet.add(prov);
+
+      // Mengumpulkan semua nama wilayah dari data pegawai
+      ["PNS", "CPNS", "PPPK"].forEach((cat) => {
+        (dataCache[cat] || []).forEach((r) => {
+          if (!r) return;
+          var prov = r._wilayah;
+          if (
+            prov &&
+            prov !== "-" &&
+            !prov.includes("TERDEFINISI") &&
+            prov !== "JFT" &&
+            prov !== "JS" &&
+            prov !== "JFU"
+          ) {
+            provSet.add(prov);
+          }
         });
       });
 
-      var sortedProv = Array.from(provSet).sort((a, b) => { if(a === "PUSAT") return -1; if(b === "PUSAT") return 1; return a.localeCompare(b); });
-      selectDaerah.html('<option value="ALL">-- SEMUA WILAYAH (PUSAT & NASIONAL) --</option>');
-      sortedProv.forEach(prov => selectDaerah.append(`<option value="${prov}">${prov}</option>`));
-      
-      if (selectUnit.length) {
-        selectUnit.html('<option value="ALL">-- SEMUA UNIT KERJA (PUSAT & DAERAH) --</option>');
-        selectUnit.append('<option value="BNPB">BNPB PUSAT</option>');
-        sortedProv.forEach(prov => { if (prov !== "PUSAT") selectUnit.append(`<option value="${prov}">${prov}</option>`); });
-      }
+      // Mengurutkan wilayah sesuai abjad
+      var sortedProv = Array.from(provSet).sort((a, b) => {
+        if (a === "PUSAT") return -1;
+        if (b === "PUSAT") return 1;
+        return a.localeCompare(b);
+      });
 
-      selectDaerah.val(currentValDaerah); if (selectUnit.length) selectUnit.val(currentValUnit);
-    } catch(e) { console.error("Error populateProvinciaDropdowns:", e); }
+      // Memasukkan daftar wilayah ke dalam Dropdown
+      selectUnit.html(
+        '<option value="ALL">-- SEMUA UNIT KERJA (PUSAT & DAERAH) --</option>',
+      );
+      selectUnit.append('<option value="BNPB">BNPB PUSAT</option>');
+      sortedProv.forEach((prov) => {
+        if (prov !== "PUSAT")
+          selectUnit.append(`<option value="${prov}">${prov}</option>`);
+      });
+
+      selectUnit.val(currentValUnit);
+    } catch (e) {
+      console.error("Error populateProvinciaDropdowns:", e);
+    }
+  }
+
+  // FUNGSI BARU: Mesin Pencari untuk Keterisian Analis Daerah
+  function filterTabelDaerah() {
+    var input = document.getElementById("search-rekap-daerah");
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById("tabel-rekap-formasi");
+    var tr = table.getElementsByTagName("tbody")[0].getElementsByTagName("tr");
+
+    for (var i = 0; i < tr.length; i++) {
+      var tdInstansi = tr[i].getElementsByTagName("td")[0];
+      if (tdInstansi) {
+        var txtValue = tdInstansi.textContent || tdInstansi.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = "";
+        } else {
+          tr[i].style.display = "none";
+        }
+      }
+    }
   }
 
   function renderRekapKeterisianDaerah() {
     try {
-      var dtTable = $('#tabel-rekap-daerah');
-      if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-      var selectedProv = clean($('#select-prov-daerah').val() || "ALL").replace(/^PROVINSI\s+/i, '').replace(/^BPBD\s+/i, '').trim();
-      var rekapDaerah = {}; var categories = ['PNS', 'CPNS', 'PPPK'];
+      var dtTable = $("#tabel-rekap-daerah");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var selectedProv = clean($("#select-prov-daerah").val() || "ALL")
+        .replace(/^PROVINSI\s+/i, "")
+        .replace(/^BPBD\s+/i, "")
+        .trim();
+      var rekapDaerah = {};
+      var categories = ["PNS", "CPNS", "PPPK"];
 
-      categories.forEach(function(cat) {
+      categories.forEach(function (cat) {
         var dataList = dataCache[cat] || [];
-        dataList.forEach(function(r) {
+        dataList.forEach(function (r) {
           if (!r) return;
           var provData = r._wilayah;
           var kabKota = clean(r.unit_kerja || r.kabupaten || "");
 
-          if (!provData || provData === "-" || provData.includes("TERDEFINISI")) return;
-          if (provData === "PUSAT") { if (!kabKota || kabKota === "-" || kabKota.includes("TERDEFINISI")) kabKota = "BNPB PUSAT"; } 
-          else { if (!kabKota || kabKota === "-" || kabKota.includes("TERDEFINISI")) return; }
+          if (!provData || provData === "-" || provData.includes("TERDEFINISI"))
+            return;
+          if (provData === "PUSAT") {
+            if (!kabKota || kabKota === "-" || kabKota.includes("TERDEFINISI"))
+              kabKota = "BNPB PUSAT";
+          } else {
+            if (!kabKota || kabKota === "-" || kabKota.includes("TERDEFINISI"))
+              return;
+          }
 
           if (selectedProv !== "ALL" && selectedProv !== "") {
-            var isMatch = (provData === selectedProv) || (provData.includes(selectedProv)) || (selectedProv.includes(provData));
+            var isMatch =
+              provData === selectedProv ||
+              provData.includes(selectedProv) ||
+              selectedProv.includes(provData);
             if (!isMatch) return;
           }
 
           var key = provData + "___" + kabKota;
-          if (!rekapDaerah[key]) rekapDaerah[key] = { wilayah: provData, kabKota: kabKota, pertama: 0, muda: 0, madya: 0, total: 0 };
+          if (!rekapDaerah[key])
+            rekapDaerah[key] = {
+              wilayah: provData,
+              kabKota: kabKota,
+              pertama: 0,
+              muda: 0,
+              madya: 0,
+              total: 0,
+            };
 
-          if (r._jenjang === "Ahli Pertama") { rekapDaerah[key].pertama++; rekapDaerah[key].total++; } 
-          else if (r._jenjang === "Ahli Muda") { rekapDaerah[key].muda++; rekapDaerah[key].total++; } 
-          else if (r._jenjang === "Ahli Madya") { rekapDaerah[key].madya++; rekapDaerah[key].total++; }
+          if (r._jenjang === "Ahli Pertama") {
+            rekapDaerah[key].pertama++;
+            rekapDaerah[key].total++;
+          } else if (r._jenjang === "Ahli Muda") {
+            rekapDaerah[key].muda++;
+            rekapDaerah[key].total++;
+          } else if (r._jenjang === "Ahli Madya") {
+            rekapDaerah[key].madya++;
+            rekapDaerah[key].total++;
+          }
         });
       });
 
-      var listData = Object.values(rekapDaerah).filter(d => d.total > 0).sort((a, b) => a.wilayah === b.wilayah ? a.kabKota.localeCompare(b.kabKota) : (a.wilayah === "PUSAT" ? -1 : (b.wilayah === "PUSAT" ? 1 : a.wilayah.localeCompare(b.wilayah))) );
-      var tbody = dtTable.find('tbody').empty();
-      var totPertama = 0, totMuda = 0, totMadya = 0, grandTotal = 0; window.currentActiveProvFilter = selectedProv;
+      var listData = Object.values(rekapDaerah)
+        .filter((d) => d.total > 0)
+        .sort((a, b) =>
+          a.wilayah === b.wilayah
+            ? a.kabKota.localeCompare(b.kabKota)
+            : a.wilayah === "PUSAT"
+              ? -1
+              : b.wilayah === "PUSAT"
+                ? 1
+                : a.wilayah.localeCompare(b.wilayah),
+        );
+      var tbody = dtTable.find("tbody").empty();
+      var totPertama = 0,
+        totMuda = 0,
+        totMadya = 0,
+        grandTotal = 0;
+      window.currentActiveProvFilter = selectedProv;
 
-      listData.forEach(function(d) {
-        var safeKab = String(d.kabKota).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        var fmtPertama = d.pertama > 0 ? `<span class="clickable-num num-pertama" onclick='showDrillDaerah("${safeKab}","Ahli Pertama")'>${d.pertama}</span>` : `<span class="num-zero">0</span>`;
-        var fmtMuda = d.muda > 0 ? `<span class="clickable-num num-muda" onclick='showDrillDaerah("${safeKab}","Ahli Muda")'>${d.muda}</span>` : `<span class="num-zero">0</span>`;
-        var fmtMadya = d.madya > 0 ? `<span class="clickable-num num-madya" onclick='showDrillDaerah("${safeKab}","Ahli Madya")'>${d.madya}</span>` : `<span class="num-zero">0</span>`;
-        var fmtTotal = d.total > 0 ? `<span class="clickable-num num-total" onclick='showDrillDaerah("${safeKab}","ALL")'>${d.total}</span>` : `<span class="num-zero">0</span>`;
+      listData.forEach(function (d) {
+        var safeKab = String(d.kabKota)
+          .replace(/'/g, "\\'")
+          .replace(/"/g, "&quot;");
+        var fmtPertama =
+          d.pertama > 0
+            ? `<span class="clickable-num num-pertama" onclick='showDrillDaerah("${safeKab}","Ahli Pertama")'>${d.pertama}</span>`
+            : `<span class="num-zero">0</span>`;
+        var fmtMuda =
+          d.muda > 0
+            ? `<span class="clickable-num num-muda" onclick='showDrillDaerah("${safeKab}","Ahli Muda")'>${d.muda}</span>`
+            : `<span class="num-zero">0</span>`;
+        var fmtMadya =
+          d.madya > 0
+            ? `<span class="clickable-num num-madya" onclick='showDrillDaerah("${safeKab}","Ahli Madya")'>${d.madya}</span>`
+            : `<span class="num-zero">0</span>`;
+        var fmtTotal =
+          d.total > 0
+            ? `<span class="clickable-num num-total" onclick='showDrillDaerah("${safeKab}","ALL")'>${d.total}</span>`
+            : `<span class="num-zero">0</span>`;
 
-        tbody.append(`<tr><td class="ps-3 fw-bold">${d.wilayah}</td><td class="fw-semibold text-dark">${d.kabKota}</td><td class="text-center">${fmtPertama}</td><td class="text-center">${fmtMuda}</td><td class="text-center">${fmtMadya}</td><td class="text-center border-start">${fmtTotal}</td></tr>`);
-        totPertama += d.pertama; totMuda += d.muda; totMadya += d.madya; grandTotal += d.total;
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${d.wilayah}</td><td class="fw-semibold text-dark">${d.kabKota}</td><td class="text-center">${fmtPertama}</td><td class="text-center">${fmtMuda}</td><td class="text-center">${fmtMadya}</td><td class="text-center border-start">${fmtTotal}</td></tr>`,
+        );
+        totPertama += d.pertama;
+        totMuda += d.muda;
+        totMadya += d.madya;
+        grandTotal += d.total;
       });
 
-      tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td></td><td class="text-center"><span class="clickable-num num-pertama" onclick='showDrillDaerah("ALL_DAERAH","Ahli Pertama")'>${totPertama}</span></td><td class="text-center"><span class="clickable-num num-muda" onclick='showDrillDaerah("ALL_DAERAH","Ahli Muda")'>${totMuda}</span></td><td class="text-center"><span class="clickable-num num-madya" onclick='showDrillDaerah("ALL_DAERAH","Ahli Madya")'>${totMadya}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillDaerah("ALL_DAERAH","ALL")'>${grandTotal}</span></td></tr>`);
-      dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch (e) { console.error("Error renderRekapKeterisianDaerah:", e); }
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td></td><td class="text-center"><span class="clickable-num num-pertama" onclick='showDrillDaerah("ALL_DAERAH","Ahli Pertama")'>${totPertama}</span></td><td class="text-center"><span class="clickable-num num-muda" onclick='showDrillDaerah("ALL_DAERAH","Ahli Muda")'>${totMuda}</span></td><td class="text-center"><span class="clickable-num num-madya" onclick='showDrillDaerah("ALL_DAERAH","Ahli Madya")'>${totMadya}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillDaerah("ALL_DAERAH","ALL")'>${grandTotal}</span></td></tr>`,
+      );
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error renderRekapKeterisianDaerah:", e);
+    }
   }
 
   function showDrillDaerah(kabKotaName, jenjang) {
-    var list = []; var categories = ['PNS', 'CPNS', 'PPPK']; var activeProv = window.currentActiveProvFilter || "ALL";
-    categories.forEach(cat => {
-      (dataCache[cat] || []).forEach(r => {
+    var list = [];
+    var categories = ["PNS", "CPNS", "PPPK"];
+    var activeProv = window.currentActiveProvFilter || "ALL";
+    categories.forEach((cat) => {
+      (dataCache[cat] || []).forEach((r) => {
         if (!r) return;
         var provData = r._wilayah;
-        var rKab = clean(r.unit_kerja || r.kabupaten || ""); 
+        var rKab = clean(r.unit_kerja || r.kabupaten || "");
 
-        if (!provData || provData === "-" || provData.includes("TERDEFINISI")) return;
-        if (provData === "PUSAT") { if (!rKab || rKab === "-" || rKab.includes("TERDEFINISI")) rKab = "BNPB PUSAT"; } 
-        else { if (!rKab || rKab === "-" || rKab.includes("TERDEFINISI")) return; }
+        if (!provData || provData === "-" || provData.includes("TERDEFINISI"))
+          return;
+        if (provData === "PUSAT") {
+          if (!rKab || rKab === "-" || rKab.includes("TERDEFINISI"))
+            rKab = "BNPB PUSAT";
+        } else {
+          if (!rKab || rKab === "-" || rKab.includes("TERDEFINISI")) return;
+        }
 
-        if (!["Ahli Pertama", "Ahli Muda", "Ahli Madya"].includes(r._jenjang)) return;
+        if (!["Ahli Pertama", "Ahli Muda", "Ahli Madya"].includes(r._jenjang))
+          return;
 
-        var matchJenjang = (jenjang === "ALL") || (jenjang === r._jenjang);
-        var matchKab = (kabKotaName === "ALL_DAERAH") || (rKab === kabKotaName);
-        var matchProv = (activeProv === "ALL") || (provData === activeProv || provData.includes(activeProv));
+        var matchJenjang = jenjang === "ALL" || jenjang === r._jenjang;
+        var matchKab = kabKotaName === "ALL_DAERAH" || rKab === kabKotaName;
+        var matchProv =
+          activeProv === "ALL" ||
+          provData === activeProv ||
+          provData.includes(activeProv);
 
-        if (kabKotaName === "ALL_DAERAH") { if (matchProv && matchJenjang) list.push(r); } 
-        else { if (matchKab && matchProv && matchJenjang) list.push(r); }
+        if (kabKotaName === "ALL_DAERAH") {
+          if (matchProv && matchJenjang) list.push(r);
+        } else {
+          if (matchKab && matchProv && matchJenjang) list.push(r);
+        }
       });
     });
-    var titleLabel = (kabKotaName === "ALL_DAERAH" ? (activeProv === "ALL" ? "Seluruh Wilayah (Pusat & Daerah)" : "Wilayah " + activeProv) : kabKotaName) + (jenjang !== "ALL" ? " - " + jenjang : "");
-    renderModal(list, 'pns', titleLabel);
+    var titleLabel =
+      (kabKotaName === "ALL_DAERAH"
+        ? activeProv === "ALL"
+          ? "Seluruh Wilayah (Pusat & Daerah)"
+          : "Wilayah " + activeProv
+        : kabKotaName) + (jenjang !== "ALL" ? " - " + jenjang : "");
+    renderModal(list, "pns", titleLabel);
   }
 
   function generatePangkatMatrix() {
     try {
-        var dtTable = $('#tbl-pangkat-matrix'); if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-        var pOrder = ["Pembina Utama (IV/e)", "Pembina Utama Madya (IV/d)", "Pembina Utama Muda (IV/c)", "Pembina Tingkat I (IV/b)", "Pembina (IV/a)", "Penata Tingkat I (III/d)", "Penata (III/c)", "Penata Muda Tingkat I (III/b)", "Penata Muda (III/a)", "Pengatur Tingkat I (II/d)", "Pengatur (II/c)", "Pengatur Muda Tingkat I (II/b)", "Pengatur Muda (II/a)"];
-        var tbody = dtTable.find('tbody').empty(); var map = globalMaps.pangkat || {};
-        var sortedP = Object.keys(map).sort((a,b) => { var iA = pOrder.findIndex(x => String(a).includes(x)); var iB = pOrder.findIndex(x => String(b).includes(x)); if(iA !== -1 && iB !== -1) return iA - iB; return iA !== -1 ? -1 : (iB !== -1 ? 1 : String(a).localeCompare(String(b))); });
-        var tPns=0;
-        sortedP.forEach(pk => {
-            var d = map[pk] || {pns:[], cpns:[]}; var pnsLen = (d.pns||[]).length; tPns += pnsLen;
-            var safePk = String(pk).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            var numDisplay = pnsLen > 0 ? `<span class="clickable-num num-pns" onclick='showDrillPangkat("${safePk}","pns")'>${pnsLen}</span>` : `<span class="num-zero">0</span>`;
-            tbody.append(`<tr><td class="ps-3 fw-bold">${pk}</td><td class="text-center">${numDisplay}</td></tr>`);
-        });
-        var totalDisplay = tPns > 0 ? `<span class="clickable-num num-total" onclick='showDrillPangkat("ALL_PNS","pns")'>${tPns}</span>` : `0`;
-        tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center">${totalDisplay}</td></tr>`);
-        window.currentPangkatMap = map;
-        dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch(e) { console.error("Error generatePangkatMatrix:", e); }
+      var dtTable = $("#tbl-pangkat-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var pOrder = [
+        "Pembina Utama (IV/e)",
+        "Pembina Utama Madya (IV/d)",
+        "Pembina Utama Muda (IV/c)",
+        "Pembina Tingkat I (IV/b)",
+        "Pembina (IV/a)",
+        "Penata Tingkat I (III/d)",
+        "Penata (III/c)",
+        "Penata Muda Tingkat I (III/b)",
+        "Penata Muda (III/a)",
+        "Pengatur Tingkat I (II/d)",
+        "Pengatur (II/c)",
+        "Pengatur Muda Tingkat I (II/b)",
+        "Pengatur Muda (II/a)",
+      ];
+      var tbody = dtTable.find("tbody").empty();
+      var map = globalMaps.pangkat || {};
+      var sortedP = Object.keys(map).sort((a, b) => {
+        var iA = pOrder.findIndex((x) => String(a).includes(x));
+        var iB = pOrder.findIndex((x) => String(b).includes(x));
+        if (iA !== -1 && iB !== -1) return iA - iB;
+        return iA !== -1
+          ? -1
+          : iB !== -1
+            ? 1
+            : String(a).localeCompare(String(b));
+      });
+      var tPns = 0;
+      sortedP.forEach((pk) => {
+        var d = map[pk] || { pns: [], cpns: [] };
+        var pnsLen = (d.pns || []).length;
+        tPns += pnsLen;
+        var safePk = String(pk).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        var numDisplay =
+          pnsLen > 0
+            ? `<span class="clickable-num num-pns" onclick='showDrillPangkat("${safePk}","pns")'>${pnsLen}</span>`
+            : `<span class="num-zero">0</span>`;
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${pk}</td><td class="text-center">${numDisplay}</td></tr>`,
+        );
+      });
+      var totalDisplay =
+        tPns > 0
+          ? `<span class="clickable-num num-total" onclick='showDrillPangkat("ALL_PNS","pns")'>${tPns}</span>`
+          : `0`;
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center">${totalDisplay}</td></tr>`,
+      );
+      window.currentPangkatMap = map;
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generatePangkatMatrix:", e);
+    }
   }
 
   function showDrillPangkat(pangkatLabel, category) {
     var list = [];
     if (pangkatLabel === "ALL_PNS") {
-      Object.keys(window.currentPangkatMap || {}).forEach(pk => {
+      Object.keys(window.currentPangkatMap || {}).forEach((pk) => {
         if (["Letnan Jenderal", "Mayor Jenderal"].includes(pk)) return;
-        var d = window.currentPangkatMap[pk]; if (d && d.pns) list = list.concat(d.pns);
+        var d = window.currentPangkatMap[pk];
+        if (d && d.pns) list = list.concat(d.pns);
       });
-      renderModal(list, 'pns', 'Seluruh Pegawai PNS (Semua Golongan)');
+      renderModal(list, "pns", "Seluruh Pegawai PNS (Semua Golongan)");
     } else {
-      list = (window.currentPangkatMap[pangkatLabel] && window.currentPangkatMap[pangkatLabel][category]) || [];
+      list =
+        (window.currentPangkatMap[pangkatLabel] &&
+          window.currentPangkatMap[pangkatLabel][category]) ||
+        [];
       renderModal(list, category, `Golongan ${pangkatLabel}`);
     }
   }
 
   function generatePPPKMatrix() {
     try {
-        var dtTable = $('#tbl-pppk-matrix'); if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-        var tbody = dtTable.find('tbody').empty(); var map = globalMaps.pppk || {};
-        var priority = ["XI", "X", "IX", "VIII", "VII","VI", "V"];
-        var sortedK = Object.keys(map).sort((a,b) => { var iA = priority.indexOf(a), iB = priority.indexOf(b); if (iA !== -1 && iB !== -1) return iA - iB; if (iA !== -1) return -1; if (iB !== -1) return 1; return String(a).localeCompare(String(b)); });
-        var tTotal = 0;
-        sortedK.forEach(gk => {
-            var list = map[gk] || []; tTotal += list.length;
-            var displayGk = String(gk).includes("Paruh") ? gk : 'Golongan ' + gk;
-            var safeGk = String(gk).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            var numDisplay = list.length > 0 ? `<span class="clickable-num num-pppk" onclick='showDrillPPPK("${safeGk}")'>${list.length}</span>` : `<span class="num-zero">0</span>`;
-            tbody.append(`<tr><td class="ps-3 fw-bold">${displayGk}</td><td class="text-center">${numDisplay}</td></tr>`);
-        });
-        var totalDisplay = tTotal > 0 ? `<span class="clickable-num num-total" onclick='showDrillPPPK("ALL_PPPK")'>${tTotal}</span>` : `0`;
-        tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center">${totalDisplay}</td></tr>`);
-        window.currentPPPKMap = map;
-        dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch(e) { console.error("Error generatePPPKMatrix:", e); }
+      var dtTable = $("#tbl-pppk-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var tbody = dtTable.find("tbody").empty();
+      var map = globalMaps.pppk || {};
+      var priority = ["XI", "X", "IX", "VIII", "VII", "VI", "V"];
+      var sortedK = Object.keys(map).sort((a, b) => {
+        var iA = priority.indexOf(a),
+          iB = priority.indexOf(b);
+        if (iA !== -1 && iB !== -1) return iA - iB;
+        if (iA !== -1) return -1;
+        if (iB !== -1) return 1;
+        return String(a).localeCompare(String(b));
+      });
+      var tTotal = 0;
+      sortedK.forEach((gk) => {
+        var list = map[gk] || [];
+        tTotal += list.length;
+        var displayGk = String(gk).includes("Paruh") ? gk : "Golongan " + gk;
+        var safeGk = String(gk).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        var numDisplay =
+          list.length > 0
+            ? `<span class="clickable-num num-pppk" onclick='showDrillPPPK("${safeGk}")'>${list.length}</span>`
+            : `<span class="num-zero">0</span>`;
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${displayGk}</td><td class="text-center">${numDisplay}</td></tr>`,
+        );
+      });
+      var totalDisplay =
+        tTotal > 0
+          ? `<span class="clickable-num num-total" onclick='showDrillPPPK("ALL_PPPK")'>${tTotal}</span>`
+          : `0`;
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center">${totalDisplay}</td></tr>`,
+      );
+      window.currentPPPKMap = map;
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generatePPPKMatrix:", e);
+    }
   }
 
   function showDrillPPPK(golongan) {
-    var list = []; var golClean = String(golongan).trim();
-    if (golClean === "ALL_PPPK") { Object.keys(window.currentPPPKMap || {}).forEach(gk => { list = list.concat(window.currentPPPKMap[gk] || []); }); renderModal(list, 'pppk', 'Seluruh Pegawai PPPK (Semua Golongan)'); } 
-    else { list = window.currentPPPKMap[golClean] || []; var lbl = golClean.includes("Paruh") ? golClean : 'Golongan ' + golClean; renderModal(list, 'pppk', lbl); }
+    var list = [];
+    var golClean = String(golongan).trim();
+    if (golClean === "ALL_PPPK") {
+      Object.keys(window.currentPPPKMap || {}).forEach((gk) => {
+        list = list.concat(window.currentPPPKMap[gk] || []);
+      });
+      renderModal(list, "pppk", "Seluruh Pegawai PPPK (Semua Golongan)");
+    } else {
+      list = window.currentPPPKMap[golClean] || [];
+      var lbl = golClean.includes("Paruh") ? golClean : "Golongan " + golClean;
+      renderModal(list, "pppk", lbl);
+    }
   }
 
   function generateJabatanMatrix() {
     try {
-      var dtTable = $('#tbl-jabatan-matrix'); 
-      if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-      var map = globalMaps.jabatan || {}; 
-      var priority = ["PUSAT", "BPBA", "BPBD Provinsi"]; 
-      var sortedKeys = Object.keys(map).sort((a,b) => { 
-          var idxA = priority.findIndex(p => String(a).includes(p)); var idxB = priority.findIndex(p => String(b).includes(p)); 
-          if(idxA !== -1 && idxB !== -1) return idxA - idxB; if(idxA !== -1) return -1; if(idxB !== -1) return 1; return String(a).localeCompare(String(b)); 
+      var dtTable = $("#tbl-jabatan-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var map = globalMaps.jabatan || {};
+      var priority = ["PUSAT", "BPBA", "BPBD Provinsi"];
+      var sortedKeys = Object.keys(map).sort((a, b) => {
+        var idxA = priority.findIndex((p) => String(a).includes(p));
+        var idxB = priority.findIndex((p) => String(b).includes(p));
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return String(a).localeCompare(String(b));
       });
-      var tbody = dtTable.find('tbody').empty(); 
-      var gp = 0, gpk = 0, gall = 0;
+      var tbody = dtTable.find("tbody").empty();
+      var gp = 0,
+        gpk = 0,
+        gall = 0;
 
-      sortedKeys.forEach(jk => {
-          if (jk === "TIDAK TERDEFINISI" || jk === "KEPALA BADAN" || !jk || jk === "-") return;
-          var d = map[jk]; if(!d) return;
-          var pnsCount = typeof d.pns === 'number' ? d.pns : 0; var pppkCount = typeof d.pppk === 'number' ? d.pppk : 0; var tot = pnsCount + pppkCount; 
-          gp += pnsCount; gpk += pppkCount; gall += tot; 
-          var lbl = jk; if(jk === "JS") lbl = "JS (Jabatan Struktural)"; else if(jk === "JFT") lbl = "JFT (Jabatan Fungsional Tertentu)";
-          var safeJk = String(jk).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-          const clickPns = pnsCount > 0 ? `<span class="clickable-num num-pns" onclick='showDrillJabatan("${safeJk}","pns")'>${pnsCount}</span>` : '<span class="num-zero">0</span>';
-          const clickPppk = pppkCount > 0 ? `<span class="clickable-num num-pppk" onclick='showDrillJabatan("${safeJk}","pppk")'>${pppkCount}</span>` : '<span class="num-zero">0</span>';
-          const clickTot = tot > 0 ? `<span class="clickable-num num-total" onclick='showDrillJabatan("${safeJk}","ALL")'>${tot}</span>` : '<span class="num-zero">0</span>';
-          tbody.append(`<tr><td class="ps-3 fw-bold">${lbl}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`);
+      sortedKeys.forEach((jk) => {
+        if (
+          jk === "TIDAK TERDEFINISI" ||
+          jk === "KEPALA BADAN" ||
+          !jk ||
+          jk === "-"
+        )
+          return;
+        var d = map[jk];
+        if (!d) return;
+        var pnsCount = typeof d.pns === "number" ? d.pns : 0;
+        var pppkCount = typeof d.pppk === "number" ? d.pppk : 0;
+        var tot = pnsCount + pppkCount;
+        gp += pnsCount;
+        gpk += pppkCount;
+        gall += tot;
+        var lbl = jk;
+        if (jk === "JS") lbl = "JS (Jabatan Struktural)";
+        else if (jk === "JFT") lbl = "JFT (Jabatan Fungsional Tertentu)";
+        var safeJk = String(jk).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const clickPns =
+          pnsCount > 0
+            ? `<span class="clickable-num num-pns" onclick='showDrillJabatan("${safeJk}","pns")'>${pnsCount}</span>`
+            : '<span class="num-zero">0</span>';
+        const clickPppk =
+          pppkCount > 0
+            ? `<span class="clickable-num num-pppk" onclick='showDrillJabatan("${safeJk}","pppk")'>${pppkCount}</span>`
+            : '<span class="num-zero">0</span>';
+        const clickTot =
+          tot > 0
+            ? `<span class="clickable-num num-total" onclick='showDrillJabatan("${safeJk}","ALL")'>${tot}</span>`
+            : '<span class="num-zero">0</span>';
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${lbl}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`,
+        );
       });
-      tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillJabatan("ALL_WILAYAH","pns")'>${gp}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillJabatan("ALL_WILAYAH","pppk")'>${gpk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillJabatan("ALL_WILAYAH","ALL")'>${gall}</span></td></tr>`);
-      dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch(e) { console.error("Error generateJabatanMatrix:", e); }
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillJabatan("ALL_WILAYAH","pns")'>${gp}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillJabatan("ALL_WILAYAH","pppk")'>${gpk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillJabatan("ALL_WILAYAH","ALL")'>${gall}</span></td></tr>`,
+      );
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generateJabatanMatrix:", e);
+    }
   }
 
   function showDrillJabatan(jabatanCode, category) {
-    var list = []; var cats = (category === 'ALL') ? ['PNS', 'CPNS', 'PPPK'] : [category.toUpperCase()];
-    cats.forEach(c => {
-      (dataCache[c] || []).forEach(r => {
-        if (!r) return; 
-        if (jabatanCode === "ALL_WILAYAH") { if (r._wilayah !== "TIDAK TERDEFINISI" && r._wilayah !== "KEPALA BADAN" && r._wilayah !== "-") list.push(r); } 
-        else if (r._wilayah === jabatanCode) { list.push(r); }
+    var list = [];
+    var cats =
+      category === "ALL" ? ["PNS", "CPNS", "PPPK"] : [category.toUpperCase()];
+    cats.forEach((c) => {
+      (dataCache[c] || []).forEach((r) => {
+        if (!r) return;
+        if (jabatanCode === "ALL_WILAYAH") {
+          if (
+            r._wilayah !== "TIDAK TERDEFINISI" &&
+            r._wilayah !== "KEPALA BADAN" &&
+            r._wilayah !== "-"
+          )
+            list.push(r);
+        } else if (r._wilayah === jabatanCode) {
+          list.push(r);
+        }
       });
     });
-    var titleLabel = (jabatanCode === "ALL_WILAYAH" ? "Seluruh Wilayah / Jenis Jabatan" : jabatanCode) + " (" + (category === 'ALL' ? 'Semua Kategori' : category.toUpperCase()) + ")";
+    var titleLabel =
+      (jabatanCode === "ALL_WILAYAH"
+        ? "Seluruh Wilayah / Jenis Jabatan"
+        : jabatanCode) +
+      " (" +
+      (category === "ALL" ? "Semua Kategori" : category.toUpperCase()) +
+      ")";
     renderModal(list, category.toLowerCase(), titleLabel);
   }
 
   function generateJFKMatrix() {
     try {
-        var dtTable = $('#tbl-jfk-matrix'); if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-        var tbody = dtTable.find('tbody').empty(); var map = globalMaps.jfk || {};
-        var priority = ["UTAMA", "MADYA", "MUDA", "PERTAMA"];
-        var sortedKeys = Object.keys(map).sort((a,b) => { var idxA = priority.findIndex(p => a.includes(p)); var idxB = priority.findIndex(p => b.includes(p)); if(idxA !== -1 && idxB !== -1) return idxA - idxB; if(idxA !== -1) return -1; if(idxB !== -1) return 1; return a.localeCompare(b); });
-        var gp=0, gpk=0, gall=0;
-        sortedKeys.forEach(jk => {
-            var d = map[jk]; if(!d) return; var pns = d.pns||0, pppk = d.pppk||0; var tot = pns + pppk; gp += pns; gpk += pppk; gall += tot; 
-            var safeJk = String(jk).replace(/'/g, "\\'").replace(/"/g, '&quot;'); 
-            const clickPns = pns > 0 ? `<span class="clickable-num num-pns" onclick='showDrillNamaJabatan("${safeJk}","pns")'>${pns}</span>` : '<span class="num-zero">0</span>';
-            const clickPppk = pppk > 0 ? `<span class="clickable-num num-pppk" onclick='showDrillNamaJabatan("${safeJk}","pppk")'>${pppk}</span>` : '<span class="num-zero">0</span>';
-            const clickTot = tot > 0 ? `<span class="clickable-num num-total" onclick='showDrillNamaJabatan("${safeJk}","ALL")'>${tot}</span>` : '<span class="num-zero">0</span>';
-            let displayJk = jk.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-            tbody.append(`<tr><td class="ps-3 fw-bold">${displayJk}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`);
+      var dtTable = $("#tbl-jfk-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var tbody = dtTable.find("tbody").empty();
+      var map = globalMaps.jfk || {};
+      var priority = ["UTAMA", "MADYA", "MUDA", "PERTAMA"];
+      var sortedKeys = Object.keys(map).sort((a, b) => {
+        var idxA = priority.findIndex((p) => a.includes(p));
+        var idxB = priority.findIndex((p) => b.includes(p));
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+      });
+      var gp = 0,
+        gpk = 0,
+        gall = 0;
+      sortedKeys.forEach((jk) => {
+        var d = map[jk];
+        if (!d) return;
+        var pns = d.pns || 0,
+          pppk = d.pppk || 0;
+        var tot = pns + pppk;
+        gp += pns;
+        gpk += pppk;
+        gall += tot;
+        var safeJk = String(jk).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+        const clickPns =
+          pns > 0
+            ? `<span class="clickable-num num-pns" onclick='showDrillNamaJabatan("${safeJk}","pns")'>${pns}</span>`
+            : '<span class="num-zero">0</span>';
+        const clickPppk =
+          pppk > 0
+            ? `<span class="clickable-num num-pppk" onclick='showDrillNamaJabatan("${safeJk}","pppk")'>${pppk}</span>`
+            : '<span class="num-zero">0</span>';
+        const clickTot =
+          tot > 0
+            ? `<span class="clickable-num num-total" onclick='showDrillNamaJabatan("${safeJk}","ALL")'>${tot}</span>`
+            : '<span class="num-zero">0</span>';
+        let displayJk = jk.replace(/\w\S*/g, function (txt) {
+          return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
         });
-        tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillNamaJabatan("ALL_JFK","pns")'>${gp}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillNamaJabatan("ALL_JFK","pppk")'>${gpk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillNamaJabatan("ALL_JFK","ALL")'>${gall}</span></td></tr>`);
-        dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch(e) { console.error("Error generateJFKMatrix:", e); }
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${displayJk}</td><td class="text-center">${clickPns}</td><td class="text-center">${clickPppk}</td><td class="text-center">${clickTot}</td></tr>`,
+        );
+      });
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillNamaJabatan("ALL_JFK","pns")'>${gp}</span></td><td class="text-center"><span class="clickable-num num-pppk" onclick='showDrillNamaJabatan("ALL_JFK","pppk")'>${gpk}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillNamaJabatan("ALL_JFK","ALL")'>${gall}</span></td></tr>`,
+      );
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generateJFKMatrix:", e);
+    }
   }
 
   function showDrillNamaJabatan(jabatanName, category) {
-    var list = []; var cats = (category === 'ALL') ? ['PNS', 'CPNS', 'PPPK'] : [category.toUpperCase()];
-    cats.forEach(c => {
-      (dataCache[c] || []).forEach(r => {
-        if (!r) return; var j = clean(r.jabatan);
-        if (jabatanName === "ALL_JFK") { if (j.includes("ANALIS KEBENCANAAN") || j.includes("PENATA PENANGGULANGAN BENCANA")) list.push(r); } 
-        else if (j === jabatanName) { list.push(r); }
+    var list = [];
+    var cats =
+      category === "ALL" ? ["PNS", "CPNS", "PPPK"] : [category.toUpperCase()];
+    cats.forEach((c) => {
+      (dataCache[c] || []).forEach((r) => {
+        if (!r) return;
+        var j = clean(r.jabatan);
+        if (jabatanName === "ALL_JFK") {
+          if (
+            j.includes("ANALIS KEBENCANAAN") ||
+            j.includes("PENATA PENANGGULANGAN BENCANA")
+          )
+            list.push(r);
+        } else if (j === jabatanName) {
+          list.push(r);
+        }
       });
     });
-    var lbl = (jabatanName === "ALL_JFK") ? "Seluruh Pejabat Fungsional Kebencanaan" : jabatanName;
-    if (category !== 'ALL') lbl += ` (${category.toUpperCase()})`;
+    var lbl =
+      jabatanName === "ALL_JFK"
+        ? "Seluruh Pejabat Fungsional Kebencanaan"
+        : jabatanName;
+    if (category !== "ALL") lbl += ` (${category.toUpperCase()})`;
     renderModal(list, category.toLowerCase(), lbl);
   }
 
   function generateGenderMatrix() {
     try {
-      var dtTable = $('#tbl-gender-matrix'); if ($.fn.DataTable.isDataTable(dtTable)) dtTable.DataTable().clear().destroy();
-      var tbody = dtTable.find('tbody').empty(); var totalL = 0, totalP = 0, totalAll = 0;
+      var dtTable = $("#tbl-gender-matrix");
+      if ($.fn.DataTable.isDataTable(dtTable))
+        dtTable.DataTable().clear().destroy();
+      var tbody = dtTable.find("tbody").empty();
+      var totalL = 0,
+        totalP = 0,
+        totalAll = 0;
       var countGender = { PNS: { L: 0, P: 0 }, PPPK: { L: 0, P: 0 } };
 
-      (dataCache.PNS || []).forEach(r => { if (r._gender === "Laki-laki") countGender.PNS.L++; else if (r._gender === "Perempuan") countGender.PNS.P++; });
-      (dataCache.PPPK || []).forEach(r => { if (r._gender === "Laki-laki") countGender.PPPK.L++; else if (r._gender === "Perempuan") countGender.PPPK.P++; });
-
-      const rows = [ { label: 'PNS', key: 'PNS' }, { label: 'PPPK', key: 'PPPK' } ];
-      rows.forEach(r => { 
-          var obj = countGender[r.key] || { L: 0, P: 0 }; var l = obj.L || 0; var p = obj.P || 0; var t = l + p; totalL += l; totalP += p; totalAll += t; 
-          var clickL = l > 0 ? `<span class="clickable-num num-pns" onclick='showDrillGender("L","${r.key}")'>${l}</span>` : '<span class="num-zero">0</span>';
-          var clickP = p > 0 ? `<span class="clickable-num num-madya" onclick='showDrillGender("P","${r.key}")'>${p}</span>` : '<span class="num-zero">0</span>';
-          var clickT = t > 0 ? `<span class="clickable-num num-total" onclick='showDrillGender("ALL","${r.key}")'>${t}</span>` : '<span class="num-zero">0</span>';
-          tbody.append(`<tr><td class="ps-3 fw-bold">${r.label}</td><td class="text-center">${clickL}</td><td class="text-center">${clickP}</td><td class="text-center fw-bold bg-light border-start">${clickT}</td></tr>`); 
+      (dataCache.PNS || []).forEach((r) => {
+        if (r._gender === "Laki-laki") countGender.PNS.L++;
+        else if (r._gender === "Perempuan") countGender.PNS.P++;
+      });
+      (dataCache.PPPK || []).forEach((r) => {
+        if (r._gender === "Laki-laki") countGender.PPPK.L++;
+        else if (r._gender === "Perempuan") countGender.PPPK.P++;
       });
 
-      tbody.append(`<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillGender("L","ALL")'>${totalL}</span></td><td class="text-center"><span class="clickable-num num-madya" onclick='showDrillGender("P","ALL")'>${totalP}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillGender("ALL","ALL")'>${totalAll}</span></td></tr>`);
-      dtTable.DataTable({ paging: false, searching: false, info: false, ordering: false, lengthChange: false });
-    } catch(e) { console.error("Error generateGenderMatrix:", e); }
+      const rows = [
+        { label: "PNS", key: "PNS" },
+        { label: "PPPK", key: "PPPK" },
+      ];
+      rows.forEach((r) => {
+        var obj = countGender[r.key] || { L: 0, P: 0 };
+        var l = obj.L || 0;
+        var p = obj.P || 0;
+        var t = l + p;
+        totalL += l;
+        totalP += p;
+        totalAll += t;
+        var clickL =
+          l > 0
+            ? `<span class="clickable-num num-pns" onclick='showDrillGender("L","${r.key}")'>${l}</span>`
+            : '<span class="num-zero">0</span>';
+        var clickP =
+          p > 0
+            ? `<span class="clickable-num num-madya" onclick='showDrillGender("P","${r.key}")'>${p}</span>`
+            : '<span class="num-zero">0</span>';
+        var clickT =
+          t > 0
+            ? `<span class="clickable-num num-total" onclick='showDrillGender("ALL","${r.key}")'>${t}</span>`
+            : '<span class="num-zero">0</span>';
+        tbody.append(
+          `<tr><td class="ps-3 fw-bold">${r.label}</td><td class="text-center">${clickL}</td><td class="text-center">${clickP}</td><td class="text-center fw-bold bg-light border-start">${clickT}</td></tr>`,
+        );
+      });
+
+      tbody.append(
+        `<tr class="grand-total-row"><td class="ps-3 text-uppercase">TOTAL KESELURUHAN</td><td class="text-center"><span class="clickable-num num-pns" onclick='showDrillGender("L","ALL")'>${totalL}</span></td><td class="text-center"><span class="clickable-num num-madya" onclick='showDrillGender("P","ALL")'>${totalP}</span></td><td class="text-center border-start"><span class="clickable-num num-total" onclick='showDrillGender("ALL","ALL")'>${totalAll}</span></td></tr>`,
+      );
+      dtTable.DataTable({
+        paging: false,
+        searching: false,
+        info: false,
+        ordering: false,
+        lengthChange: false,
+      });
+    } catch (e) {
+      console.error("Error generateGenderMatrix:", e);
+    }
   }
 
   function showDrillGender(genderKey, category) {
-    var list = []; var cats = (category === 'ALL') ? ['PNS', 'PPPK'] : [category.toUpperCase()];
-    cats.forEach(c => {
-      (dataCache[c] || []).forEach(r => {
+    var list = [];
+    var cats = category === "ALL" ? ["PNS", "PPPK"] : [category.toUpperCase()];
+    cats.forEach((c) => {
+      (dataCache[c] || []).forEach((r) => {
         if (!r) return;
         var matchGender = false;
-        if (genderKey === 'ALL') matchGender = (r._gender === "Laki-laki" || r._gender === "Perempuan");
-        else if (genderKey === 'L') matchGender = (r._gender === "Laki-laki");
-        else if (genderKey === 'P') matchGender = (r._gender === "Perempuan");
+        if (genderKey === "ALL")
+          matchGender = r._gender === "Laki-laki" || r._gender === "Perempuan";
+        else if (genderKey === "L") matchGender = r._gender === "Laki-laki";
+        else if (genderKey === "P") matchGender = r._gender === "Perempuan";
         if (matchGender) list.push(r);
       });
     });
-    var gLabel = genderKey === 'L' ? 'Laki-laki' : (genderKey === 'P' ? 'Perempuan' : 'Seluruh Gender');
-    var cLabel = category === 'ALL' ? 'Seluruh Pegawai (PNS & PPPK)' : category.toUpperCase();
+    var gLabel =
+      genderKey === "L"
+        ? "Laki-laki"
+        : genderKey === "P"
+          ? "Perempuan"
+          : "Seluruh Gender";
+    var cLabel =
+      category === "ALL"
+        ? "Seluruh Pegawai (PNS & PPPK)"
+        : category.toUpperCase();
     renderModal(list, category.toLowerCase(), `${cLabel} - ${gLabel}`);
   }
 
   // =========================================================
-  // FUNGSI KHUSUS: RENDER TABEL FORMASI (INSTAN)
+  // FUNGSI KHUSUS: RENDER TABEL FORMASI (INSTAN + WARNA KOLOM)
   // =========================================================
   function renderFormasiTable() {
-      var data = window.rekapFormasiData || [];
-      var tbody = '';
-      
-      if(data.length === 0) {
-          $('#tbody-rekap-formasi').html('<tr><td colspan="13" class="text-center py-4">Belum ada data Kebutuhan yang diisi.</td></tr>');
-          return;
-      }
+    var data = window.rekapFormasiData || [];
+    var tbody = "";
 
-      data.forEach(function(row) {
-          const formatStatus = (val) => {
-              if (val < 0) return `<span style="color: #ef4444; font-weight: bold;">-${Math.abs(val)}</span>`;
-              if (val > 0) return `<span style="color: #3b82f6; font-weight: bold;">+${val}</span>`;
-              return `<span style="color: #10b981; font-weight: bold;">0</span>`;
-          };
+    if (data.length === 0) {
+      $("#tbody-rekap-formasi").html(
+        '<tr><td colspan="13" class="text-center py-4">Belum ada data Kebutuhan yang diisi.</td></tr>',
+      );
+      return;
+    }
 
-          const clickAktual = (val, instansi, jenjang) => {
-              if (val > 0) {
-                  var safeInst = String(instansi).replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                  if (instansi === "BNPB PUSAT") safeInst = "BNPB"; 
-                  var cClass = 'num-total';
-                  if (jenjang === 'Ahli Pertama') cClass = 'num-pertama';
-                  if (jenjang === 'Ahli Muda') cClass = 'num-muda';
-                  if (jenjang === 'Ahli Madya') cClass = 'num-madya';
-                  return `<span class="clickable-num ${cClass}" onclick='showDrillFormasi("${safeInst}", "${jenjang}")'>${val}</span>`;
-              }
-              return `<span class="num-zero">0</span>`;
-          };
+    data.forEach(function (row) {
+      const formatStatus = (val) => {
+        if (val < 0)
+          return `<span style="color: #ef4444; font-weight: bold;">-${Math.abs(val)}</span>`;
+        if (val > 0)
+          return `<span style="color: #3b82f6; font-weight: bold;">+${val}</span>`;
+        return `<span style="color: #10b981; font-weight: bold;">0</span>`;
+      };
 
-          var bgRow = row.isParent ? 'background-color: #f1f5f9; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;' : '';
-          var fontW = row.isParent ? 'font-weight: 800; color: #0f172a; font-size: 0.95rem;' : 'font-weight: 600; color: #334155;';
-          var indent = row.isSubUnit ? '<span style="margin-left: 20px; color: #94a3b8;">↳</span> ' : '';
+      const clickAktual = (val, instansi, jenjang) => {
+        if (val > 0) {
+          var safeInst = String(instansi)
+            .replace(/'/g, "\\'")
+            .replace(/"/g, "&quot;");
+          if (instansi === "BNPB PUSAT") safeInst = "BNPB";
+          var cClass = "num-total";
+          if (jenjang === "Ahli Pertama") cClass = "num-pertama";
+          if (jenjang === "Ahli Muda") cClass = "num-muda";
+          if (jenjang === "Ahli Madya") cClass = "num-madya";
+          return `<span class="clickable-num ${cClass}" onclick='showDrillFormasi("${safeInst}", "${jenjang}")'>${val}</span>`;
+        }
+        return `<span class="num-zero">0</span>`;
+      };
 
-          tbody += `<tr style="${bgRow}">
-              <td style="${fontW} padding-left: ${row.isSubUnit ? '10px' : '15px'};">${indent}${row.instansi}</td>
+      // Memicu pergantian warna menjadi lebih gelap untuk baris Induk
+      var classParent = row.isParent ? "baris-induk" : "";
+      var styleParentRow = row.isParent
+        ? "border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"
+        : "";
+
+      // Kolom Instansi paling kiri tetap warna netral (Abu-abu / Putih)
+      var bgInstansi = row.isParent
+        ? "background-color: #f1f5f9;"
+        : "background-color: #ffffff;";
+      var fontW = row.isParent
+        ? "font-weight: 800; color: #0f172a; font-size: 0.95rem;"
+        : "font-weight: 600; color: #334155;";
+      var indent = row.isSubUnit
+        ? '<span style="margin-left: 20px; color: #94a3b8;">↳</span> '
+        : "";
+
+      tbody += `<tr class="${classParent}" style="${styleParentRow}">
+              <td style="${fontW} ${bgInstansi} padding-left: ${row.isSubUnit ? "10px" : "15px"};">${indent}${row.instansi}</td>
               
-              <td class="text-center text-muted">${row.b1}</td>
-              <td class="text-center">${clickAktual(row.i1, row.instansi, 'Ahli Pertama')}</td>
-              <td class="text-center">${formatStatus(row.s1)}</td>
+              <td class="text-center text-muted col-pertama">${row.b1}</td>
+              <td class="text-center col-pertama">${clickAktual(row.i1, row.instansi, "Ahli Pertama")}</td>
+              <td class="text-center col-pertama">${formatStatus(row.s1)}</td>
               
-              <td class="text-center text-muted">${row.b2}</td>
-              <td class="text-center">${clickAktual(row.i2, row.instansi, 'Ahli Muda')}</td>
-              <td class="text-center">${formatStatus(row.s2)}</td>
+              <td class="text-center text-muted col-muda">${row.b2}</td>
+              <td class="text-center col-muda">${clickAktual(row.i2, row.instansi, "Ahli Muda")}</td>
+              <td class="text-center col-muda">${formatStatus(row.s2)}</td>
               
-              <td class="text-center text-muted">${row.b3}</td>
-              <td class="text-center">${clickAktual(row.i3, row.instansi, 'Ahli Madya')}</td>
-              <td class="text-center">${formatStatus(row.s3)}</td>
+              <td class="text-center text-muted col-madya">${row.b3}</td>
+              <td class="text-center col-madya">${clickAktual(row.i3, row.instansi, "Ahli Madya")}</td>
+              <td class="text-center col-madya">${formatStatus(row.s3)}</td>
               
-              <td class="text-center text-muted" style="border-left: 1px solid #f1f5f9;">${row.bt}</td>
-              <td class="text-center" style="border-left: 1px solid #f8fafc;">${clickAktual(row.it, row.instansi, 'ALL')}</td>
-              <td class="text-center">${formatStatus(row.st)}</td>
+              <td class="text-center text-muted col-total">${row.bt}</td>
+              <td class="text-center col-total">${clickAktual(row.it, row.instansi, "ALL")}</td>
+              <td class="text-center col-total">${formatStatus(row.st)}</td>
           </tr>`;
-      });
-      
-      $('#tbody-rekap-formasi').html(tbody);
+    });
+
+    $("#tbody-rekap-formasi").html(tbody);
   }
 
   // Fungsi untuk memunculkan Modal Popup Daftar Nama saat angka Aktual diklik
-  window.showDrillFormasi = function(instansiName, jenjang) {
-      var list = []; 
-      var categories = ['PNS', 'CPNS', 'PPPK'];
-      
-      // Standarisasi kata kunci pencarian agar sama dengan mesin backend
-      var searchStr = instansiName.toUpperCase();
-      if (searchStr.includes("PROVINSI") || searchStr.includes("KABUPATEN") || searchStr.includes("KOTA")) {
-          if (!searchStr.startsWith("BPBD")) searchStr = "BPBD " + searchStr;
-      } else if (searchStr.includes("DEPUTI") || searchStr.includes("PUSAT PEMBINAAN")) {
-          if (!searchStr.endsWith("BNPB")) searchStr = searchStr + " BNPB";
-      }
+  window.showDrillFormasi = function (instansiName, jenjang) {
+    var list = [];
+    var categories = ["PNS", "CPNS", "PPPK"];
 
-      // Memindai seluruh data pegawai
-      categories.forEach(cat => {
-          (dataCache[cat] || []).forEach(r => {
-              if (!r) return;
-              var unitKerjaPegawai = r.unit_kerja ? r.unit_kerja.toUpperCase() : "";
-              var jabatanPegawai = r.jabatan ? r.jabatan.toUpperCase() : "";
-              
-              if (unitKerjaPegawai.includes(searchStr)) {
-                  if (jenjang === 'ALL') {
-                      if (jabatanPegawai.includes("PERTAMA") || jabatanPegawai.includes("MUDA") || jabatanPegawai.includes("MADYA")) list.push(r);
-                  } else if (jenjang === 'Ahli Pertama' && jabatanPegawai.includes("PERTAMA")) {
-                      list.push(r);
-                  } else if (jenjang === 'Ahli Muda' && jabatanPegawai.includes("MUDA")) {
-                      list.push(r);
-                  } else if (jenjang === 'Ahli Madya' && jabatanPegawai.includes("MADYA")) {
-                      list.push(r);
-                  }
-              }
-          });
+    // Standarisasi kata kunci pencarian agar sama dengan mesin backend
+    var searchStr = instansiName.toUpperCase();
+    if (
+      searchStr.includes("PROVINSI") ||
+      searchStr.includes("KABUPATEN") ||
+      searchStr.includes("KOTA")
+    ) {
+      if (!searchStr.startsWith("BPBD")) searchStr = "BPBD " + searchStr;
+    } else if (
+      searchStr.includes("DEPUTI") ||
+      searchStr.includes("PUSAT PEMBINAAN")
+    ) {
+      if (!searchStr.endsWith("BNPB")) searchStr = searchStr + " BNPB";
+    }
+
+    // Memindai seluruh data pegawai
+    categories.forEach((cat) => {
+      (dataCache[cat] || []).forEach((r) => {
+        if (!r) return;
+        var unitKerjaPegawai = r.unit_kerja ? r.unit_kerja.toUpperCase() : "";
+        var jabatanPegawai = r.jabatan ? r.jabatan.toUpperCase() : "";
+
+        if (unitKerjaPegawai.includes(searchStr)) {
+          if (jenjang === "ALL") {
+            if (
+              jabatanPegawai.includes("PERTAMA") ||
+              jabatanPegawai.includes("MUDA") ||
+              jabatanPegawai.includes("MADYA")
+            )
+              list.push(r);
+          } else if (
+            jenjang === "Ahli Pertama" &&
+            jabatanPegawai.includes("PERTAMA")
+          ) {
+            list.push(r);
+          } else if (
+            jenjang === "Ahli Muda" &&
+            jabatanPegawai.includes("MUDA")
+          ) {
+            list.push(r);
+          } else if (
+            jenjang === "Ahli Madya" &&
+            jabatanPegawai.includes("MADYA")
+          ) {
+            list.push(r);
+          }
+        }
       });
-      
-      // Tampilkan ke Popup
-      var titleLabel = instansiName + (jenjang !== "ALL" ? " - " + jenjang : " - Keseluruhan JF");
-      renderModal(list, 'all', titleLabel);
+    });
+
+    // Tampilkan ke Popup
+    var titleLabel =
+      instansiName +
+      (jenjang !== "ALL" ? " - " + jenjang : " - Keseluruhan JF");
+    renderModal(list, "all", titleLabel);
   };
 
   // =========================================================
   // 6. FUNGSI PEMBUAT TABEL KECIL MELAYANG (MODAL DRILLDOWN)
   // =========================================================
   function renderModal(list, category, label) {
-    $('#drilldownTitle').text(`Rincian Pegawai - ${label}`);
-    if ($.fn.DataTable.isDataTable('#drilldownTable')) $('#drilldownTable').DataTable().destroy(); 
-    $('#drilldownTable').empty();
+    $("#drilldownTitle").text(`Rincian Pegawai - ${label}`);
+    if ($.fn.DataTable.isDataTable("#drilldownTable"))
+      $("#drilldownTable").DataTable().destroy();
+    $("#drilldownTable").empty();
 
     var cols = [
-        { title: "NO", data: null, render: (d,t,r,meta) => meta.row + 1, className: "text-center fw-bold text-muted", width: "40px" }, 
-        { title: "NAMA", data: null, render: (d,t,r) => (r && r.nama) ? `<span class="fw-semibold text-dark">${r.nama}</span>` : "-" }, 
-        { 
-            title: '<i class="fas fa-venus-mars" style="opacity:0.5;" title="Gender"></i>', data: null, className: "text-center align-middle", width: "40px", orderable: false, 
-            render: function(data, type, row) {
-                if(!row) return "-"; let gen = row._gender; 
-                if(type === 'display') {
-                    if(gen === "Laki-laki") return '<span class="badge rounded-circle shadow-sm" style="background: #eff6ff; color: #3b82f6; padding: 6px 7px; font-size: 0.85rem;" title="Laki-laki"><i class="fas fa-mars"></i></span>';
-                    if(gen === "Perempuan") return '<span class="badge rounded-circle shadow-sm" style="background: #fdf2f8; color: #ec4899; padding: 6px 7px; font-size: 0.85rem;" title="Perempuan"><i class="fas fa-venus"></i></span>';
-                    return '<span class="text-muted">-</span>';
-                }
-                return gen;
-            }
+      {
+        title: "NO",
+        data: null,
+        render: (d, t, r, meta) => meta.row + 1,
+        className: "text-center fw-bold text-muted",
+        width: "40px",
+      },
+      {
+        title: "NAMA",
+        data: null,
+        render: function (d, t, r) {
+          if (!r || !r.nama) return "-";
+          let html = `<span class="fw-semibold text-dark">${r.nama}</span>`;
+          if (r._statusKhusus) {
+            html += `<div class="mt-1">${getStatusBadgeHtml(r._statusKhusus)}</div>`;
+          }
+          return html;
         },
-        { 
-            title: "STATUS", data: null, className: 'text-center align-middle', 
-            render: function(d,t,r) {
-                let status = r._status || "-";
-                if (t === 'display') {
-                    if (status === 'PNS') return '<span style="background:#eff6ff; color:#3b82f6; border: 1px solid #bfdbfe; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">PNS</span>';
-                    if (status === 'CPNS') return '<span style="background:#ecfeff; color:#0d9488; border: 1px solid #99f6e4; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">CPNS</span>';
-                    if (status === 'PPPK') return '<span style="background:#f0fdf4; color:#16a34a; border: 1px solid #bbf7d0; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">PPPK</span>';
-                    return `<span style="background:#f1f5f9; color:#64748b; border: 1px solid #cbd5e0; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">${status}</span>`;
-                }
-                return status;
-            }
+      },
+      {
+        title:
+          '<i class="fas fa-venus-mars" style="opacity:0.5;" title="Gender"></i>',
+        data: null,
+        className: "text-center align-middle",
+        width: "40px",
+        orderable: false,
+        render: function (data, type, row) {
+          if (!row) return "-";
+          let gen = row._gender;
+          if (type === "display") {
+            if (gen === "Laki-laki")
+              return '<span class="badge rounded-circle shadow-sm" style="background: #eff6ff; color: #3b82f6; padding: 6px 7px; font-size: 0.85rem;" title="Laki-laki"><i class="fas fa-mars"></i></span>';
+            if (gen === "Perempuan")
+              return '<span class="badge rounded-circle shadow-sm" style="background: #fdf2f8; color: #ec4899; padding: 6px 7px; font-size: 0.85rem;" title="Perempuan"><i class="fas fa-venus"></i></span>';
+            return '<span class="text-muted">-</span>';
+          }
+          return gen;
         },
-        { title: "PANGKAT / GOLONGAN", data: null, className: 'text-center', render:(d,t,r)=> r._pangkat },
-        { title: "WILAYAH", data: null, className: 'text-center', render:(d,t,r)=> r._wilayah },
-        { title: "JABATAN", data: null, render:(d,t,r)=> (r && r.jabatan) ? r.jabatan : "-" },
-        { title: "UNIT KERJA", data: null, render:(d,t,r)=> (r && r.unit_kerja) ? r.unit_kerja : "-" },
-        {
-            title: "AKSI", data: null, defaultContent: "", className: "text-center align-middle", orderable: false, width: "50px",
-            render: function(data, typeRender, row) {
-                if (typeRender === 'display' && row) return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('ID-1001')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
-                return "";
+      },
+      {
+        title: "STATUS",
+        data: null,
+        className: "text-center align-middle",
+        render: function (d, t, r) {
+          let status = r._status || "-";
+          if (t === "display") {
+            if (status === "PNS")
+              return '<span style="background:#eff6ff; color:#3b82f6; border: 1px solid #bfdbfe; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">PNS</span>';
+            if (status === "CPNS")
+              return '<span style="background:#ecfeff; color:#0d9488; border: 1px solid #99f6e4; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">CPNS</span>';
+            if (status === "PPPK")
+              return '<span style="background:#f0fdf4; color:#16a34a; border: 1px solid #bbf7d0; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">PPPK</span>';
+            return `<span style="background:#f1f5f9; color:#64748b; border: 1px solid #cbd5e0; font-size:0.7rem; padding: 4px 10px; border-radius: 6px; font-weight: 700;">${status}</span>`;
+          }
+          return status;
+        },
+      },
+      {
+        title: "PANGKAT / GOLONGAN",
+        data: null,
+        className: "text-center",
+        render: (d, t, r) => r._pangkat,
+      },
+      {
+        title: "WILAYAH",
+        data: null,
+        className: "text-center",
+        render: (d, t, r) => r._wilayah,
+      },
+      {
+        title: "JABATAN",
+        data: null,
+        render: (d, t, r) => (r && r.jabatan ? r.jabatan : "-"),
+      },
+      {
+        title: "UNIT KERJA",
+        data: null,
+        render: (d, t, r) => (r && r.unit_kerja ? r.unit_kerja : "-"),
+      },
+      {
+        title: "AKSI",
+        data: null,
+        defaultContent: "",
+        className: "text-center align-middle",
+        orderable: false,
+        width: "80px",
+        render: function (data, typeRender, row) {
+          if (typeRender === "display" && row) {
+            if (isUserAdmin()) {
+              return renderAdminDropdownAksi(row);
+            } else {
+              return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${row.nip || "ID-1001"}')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
             }
-        }
+          }
+          return "";
+        },
+      },
     ];
-    
-    $('#drilldownTable').DataTable({ 
-        data: list, columns: cols, pageLength: 10, lengthChange: true, lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua Data"]],
-        language: { paginate: { previous: '<i class="fas fa-chevron-left"></i>', next: '<i class="fas fa-chevron-right"></i>' }, lengthMenu: "Tampilkan _MENU_ baris data" } 
+
+    $("#drilldownTable").DataTable({
+      data: list,
+      columns: cols,
+      pageLength: 10,
+      lengthChange: true,
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, "Semua Data"],
+      ],
+      language: {
+        paginate: {
+          previous: '<i class="fas fa-chevron-left"></i>',
+          next: '<i class="fas fa-chevron-right"></i>',
+        },
+        lengthMenu: "Tampilkan _MENU_ baris data",
+      },
     });
-    new bootstrap.Modal('#drilldownModal').show();
+    new bootstrap.Modal("#drilldownModal").show();
   }
 
   // =========================================================
@@ -1098,187 +1868,684 @@ $(document).ready(function() {
   function exportTable(tableId, fileName) {
     try {
       var tableElem = document.getElementById(tableId);
-      if (!tableElem) { alert("Tabel tidak ditemukan!"); return; }
+      if (!tableElem) {
+        alert("Tabel tidak ditemukan!");
+        return;
+      }
       var ws = XLSX.utils.table_to_sheet(tableElem);
-      var wscols = []; var range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-      for (var C = range.s.c; C <= range.e.c; ++C) { wscols.push({ wch: 20 }); } ws['!cols'] = wscols;
-      var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Rekap Data");
-      var finalFileName = (fileName || 'Export_Data') + '_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+      var wscols = [];
+      var range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+      for (var C = range.s.c; C <= range.e.c; ++C) {
+        wscols.push({ wch: 20 });
+      }
+      ws["!cols"] = wscols;
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Rekap Data");
+      var finalFileName =
+        (fileName || "Export_Data") +
+        "_" +
+        new Date().toISOString().slice(0, 10) +
+        ".xlsx";
       XLSX.writeFile(wb, finalFileName);
-    } catch (e) { alert("Gagal mengunduh Excel: " + e.message); }
+    } catch (e) {
+      alert("Gagal mengunduh Excel: " + e.message);
+    }
   }
 
   function renderCharts() {
     try {
-      var softFill = { type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, opacityFrom: 0.85, opacityTo: 0.65, stops: [0, 100] } };
-      var softStroke = { width: 3, colors: ['#ffffff'] };
-      var shadowPie = { enabled: true, color: '#0f172a', top: 4, left: 0, blur: 8, opacity: 0.05 };
+      var softFill = {
+        type: "gradient",
+        gradient: {
+          shade: "light",
+          type: "vertical",
+          shadeIntensity: 0.5,
+          opacityFrom: 0.85,
+          opacityTo: 0.65,
+          stops: [0, 100],
+        },
+      };
+      var softStroke = { width: 3, colors: ["#ffffff"] };
+      var shadowPie = {
+        enabled: true,
+        color: "#0f172a",
+        top: 4,
+        left: 0,
+        blur: 8,
+        opacity: 0.05,
+      };
 
-      var optionsComp = { series: [dashboardStats.pns||0, dashboardStats.pppk||0], labels: ['PNS', 'PPPK'], chart: { type: 'donut', height: 320, dropShadow: shadowPie }, colors: ['#60a5fa', '#2dd4bf'], fill: softFill, stroke: softStroke, dataLabels: { dropShadow: { enabled: false }, style: { colors: ['#ffffff'], fontWeight: 600 } }, legend: { position: 'bottom', markers: { radius: 12 } } };
-      $("#chart-composition").empty(); new ApexCharts(document.querySelector("#chart-composition"), optionsComp).render();
+      var optionsComp = {
+        series: [dashboardStats.pns || 0, dashboardStats.pppk || 0],
+        labels: ["PNS", "PPPK"],
+        chart: { type: "donut", height: 320, dropShadow: shadowPie },
+        colors: ["#60a5fa", "#2dd4bf"],
+        fill: softFill,
+        stroke: softStroke,
+        dataLabels: {
+          dropShadow: { enabled: false },
+          style: { colors: ["#ffffff"], fontWeight: 600 },
+        },
+        legend: { position: "bottom", markers: { radius: 12 } },
+      };
+      $("#chart-composition").empty();
+      new ApexCharts(
+        document.querySelector("#chart-composition"),
+        optionsComp,
+      ).render();
 
-      var totL = 0, totP = 0; Object.keys(globalMaps.gender||{}).forEach(k => { totL += (globalMaps.gender[k].L || 0); totP += (globalMaps.gender[k].P || 0); });
-      var optionsGender = { series: [totL, totP], labels: ['Laki-laki', 'Perempuan'], chart: { type: 'pie', height: 320, dropShadow: shadowPie }, colors: ['#818cf8', '#f472b6'], fill: softFill, stroke: softStroke, dataLabels: { dropShadow: { enabled: false }, style: { colors: ['#ffffff'], fontWeight: 600 } }, legend: { position: 'bottom', markers: { radius: 12 } } };
-      $("#chart-gender").empty(); new ApexCharts(document.querySelector("#chart-gender"), optionsGender).render();
+      var totL = 0,
+        totP = 0;
+      Object.keys(globalMaps.gender || {}).forEach((k) => {
+        totL += globalMaps.gender[k].L || 0;
+        totP += globalMaps.gender[k].P || 0;
+      });
+      var optionsGender = {
+        series: [totL, totP],
+        labels: ["Laki-laki", "Perempuan"],
+        chart: { type: "pie", height: 320, dropShadow: shadowPie },
+        colors: ["#818cf8", "#f472b6"],
+        fill: softFill,
+        stroke: softStroke,
+        dataLabels: {
+          dropShadow: { enabled: false },
+          style: { colors: ["#ffffff"], fontWeight: 600 },
+        },
+        legend: { position: "bottom", markers: { radius: 12 } },
+      };
+      $("#chart-gender").empty();
+      new ApexCharts(
+        document.querySelector("#chart-gender"),
+        optionsGender,
+      ).render();
 
-      var jabLabels = [], jabSeries = []; 
-      Object.keys(globalMaps.jabatan || {}).forEach(k => { if (k !== "TIDAK TERDEFINISI" && k !== "KEPALA BADAN") { jabLabels.push(k); var t = globalMaps.jabatan[k]; jabSeries.push((t.pns || 0) + (t.cpns || 0) + (t.pppk || 0)); } });
-      var optionsJab = { series: jabSeries, labels: jabLabels, chart: { type: 'pie', height: 350, dropShadow: shadowPie }, colors: ['#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#60a5fa'], fill: softFill, stroke: softStroke, plotOptions: { pie: { customScale: 0.85, offsetY: 10 } }, dataLabels: { dropShadow: { enabled: false }, style: { colors: ['#ffffff'], fontWeight: 600, fontSize: '11px' } }, legend: { position: 'bottom', maxHeight: 70, offsetY: 0, itemMargin: { horizontal: 5, vertical: 3 }, markers: { radius: 12 } } };
-      $("#chart-jabatan").empty(); new ApexCharts(document.querySelector("#chart-jabatan"), optionsJab).render();
+      var jabLabels = [],
+        jabSeries = [];
+      Object.keys(globalMaps.jabatan || {}).forEach((k) => {
+        if (k !== "TIDAK TERDEFINISI" && k !== "KEPALA BADAN") {
+          jabLabels.push(k);
+          var t = globalMaps.jabatan[k];
+          jabSeries.push((t.pns || 0) + (t.cpns || 0) + (t.pppk || 0));
+        }
+      });
+      var optionsJab = {
+        series: jabSeries,
+        labels: jabLabels,
+        chart: { type: "pie", height: 350, dropShadow: shadowPie },
+        colors: ["#a78bfa", "#34d399", "#fbbf24", "#f472b6", "#60a5fa"],
+        fill: softFill,
+        stroke: softStroke,
+        plotOptions: { pie: { customScale: 0.85, offsetY: 10 } },
+        dataLabels: {
+          dropShadow: { enabled: false },
+          style: { colors: ["#ffffff"], fontWeight: 600, fontSize: "11px" },
+        },
+        legend: {
+          position: "bottom",
+          maxHeight: 70,
+          offsetY: 0,
+          itemMargin: { horizontal: 5, vertical: 3 },
+          markers: { radius: 12 },
+        },
+      };
+      $("#chart-jabatan").empty();
+      new ApexCharts(
+        document.querySelector("#chart-jabatan"),
+        optionsJab,
+      ).render();
 
-      var getBarOptions = (labels, data, color) => ({ series: [{ name: 'Jumlah', data: data }], chart: { type: 'bar', height: 320, toolbar: { show: false } }, xaxis: { categories: labels, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: '#94a3b8', fontFamily: 'Poppins' } } }, yaxis: { labels: { style: { colors: '#94a3b8', fontFamily: 'Poppins' } } }, plotOptions: { bar: { borderRadius: 6, columnWidth: '55%', dataLabels: { position: 'top' } } }, colors: [color], fill: { type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, opacityFrom: 0.9, opacityTo: 0.5, stops: [0, 100] } }, dataLabels: { enabled: true, offsetY: -25, style: { fontSize: '11px', colors: ["#64748b"], fontWeight: 700 } }, grid: { borderColor: '#f1f5f9', strokeDashArray: 5, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } } });
+      var getBarOptions = (labels, data, color) => ({
+        series: [{ name: "Jumlah", data: data }],
+        chart: { type: "bar", height: 320, toolbar: { show: false } },
+        xaxis: {
+          categories: labels,
+          axisBorder: { show: false },
+          axisTicks: { show: false },
+          labels: { style: { colors: "#94a3b8", fontFamily: "Poppins" } },
+        },
+        yaxis: {
+          labels: { style: { colors: "#94a3b8", fontFamily: "Poppins" } },
+        },
+        plotOptions: {
+          bar: {
+            borderRadius: 6,
+            columnWidth: "55%",
+            dataLabels: { position: "top" },
+          },
+        },
+        colors: [color],
+        fill: {
+          type: "gradient",
+          gradient: {
+            shade: "light",
+            type: "vertical",
+            shadeIntensity: 0.5,
+            opacityFrom: 0.9,
+            opacityTo: 0.5,
+            stops: [0, 100],
+          },
+        },
+        dataLabels: {
+          enabled: true,
+          offsetY: -25,
+          style: { fontSize: "11px", colors: ["#64748b"], fontWeight: 700 },
+        },
+        grid: {
+          borderColor: "#f1f5f9",
+          strokeDashArray: 5,
+          xaxis: { lines: { show: false } },
+          yaxis: { lines: { show: true } },
+        },
+      });
 
-      var pOrder = ["Pembina Utama (IV/e)", "Pembina Utama Madya (IV/d)", "Pembina Utama Muda (IV/c)", "Pembina Tk. I (IV/b)", "Pembina (IV/a)", "Penata Tk. I (III/d)", "Penata (III/c)", "Penata Muda Tk. I (III/b)", "Penata Muda (III/a)", "Pengatur Tk. I (II/d)", "Pengatur (II/c)", "Pengatur Muda Tk. I (II/b)", "Pengatur Muda (II/a)"];
-      var pLabels = [], pData = []; pOrder.forEach(pk => { if(globalMaps.pangkat && globalMaps.pangkat[pk]) { pLabels.push(pk.split(" (")[1] ? pk.split(" (")[1].replace(")","") : pk); var d = globalMaps.pangkat[pk]; pData.push((d.pns||[]).length + (d.cpns||[]).length); } });
-      $("#chart-pangkat-pns").empty(); new ApexCharts(document.querySelector("#chart-pangkat-pns"), getBarOptions(pLabels, pData, '#60a5fa')).render();
+      var pOrder = [
+        "Pembina Utama (IV/e)",
+        "Pembina Utama Madya (IV/d)",
+        "Pembina Utama Muda (IV/c)",
+        "Pembina Tk. I (IV/b)",
+        "Pembina (IV/a)",
+        "Penata Tk. I (III/d)",
+        "Penata (III/c)",
+        "Penata Muda Tk. I (III/b)",
+        "Penata Muda (III/a)",
+        "Pengatur Tk. I (II/d)",
+        "Pengatur (II/c)",
+        "Pengatur Muda Tk. I (II/b)",
+        "Pengatur Muda (II/a)",
+      ];
+      var pLabels = [],
+        pData = [];
+      pOrder.forEach((pk) => {
+        if (globalMaps.pangkat && globalMaps.pangkat[pk]) {
+          pLabels.push(
+            pk.split(" (")[1] ? pk.split(" (")[1].replace(")", "") : pk,
+          );
+          var d = globalMaps.pangkat[pk];
+          pData.push((d.pns || []).length + (d.cpns || []).length);
+        }
+      });
+      $("#chart-pangkat-pns").empty();
+      new ApexCharts(
+        document.querySelector("#chart-pangkat-pns"),
+        getBarOptions(pLabels, pData, "#60a5fa"),
+      ).render();
 
-      var pppkLabels = [], pppkData = []; var priority = ["IX", "VII", "V", "I", "PPPK Paruh Waktu"];
-      var sortedPPPK = Object.keys(globalMaps.pppk||{}).sort((a,b) => { var iA = priority.indexOf(a), iB = priority.indexOf(b); if (iA !== -1 && iB !== -1) return iA - iB; if (iA !== -1) return -1; if (iB !== -1) return 1; return String(a).localeCompare(String(b)); });
-      sortedPPPK.forEach(k => { pppkLabels.push(k); pppkData.push((globalMaps.pppk[k]||[]).length); });
-      $("#chart-golongan-pppk").empty(); new ApexCharts(document.querySelector("#chart-golongan-pppk"), getBarOptions(pppkLabels, pppkData, '#34d399')).render();
+      var pppkLabels = [],
+        pppkData = [];
+      var priority = ["IX", "VII", "V", "I", "PPPK Paruh Waktu"];
+      var sortedPPPK = Object.keys(globalMaps.pppk || {}).sort((a, b) => {
+        var iA = priority.indexOf(a),
+          iB = priority.indexOf(b);
+        if (iA !== -1 && iB !== -1) return iA - iB;
+        if (iA !== -1) return -1;
+        if (iB !== -1) return 1;
+        return String(a).localeCompare(String(b));
+      });
+      sortedPPPK.forEach((k) => {
+        pppkLabels.push(k);
+        pppkData.push((globalMaps.pppk[k] || []).length);
+      });
+      $("#chart-golongan-pppk").empty();
+      new ApexCharts(
+        document.querySelector("#chart-golongan-pppk"),
+        getBarOptions(pppkLabels, pppkData, "#34d399"),
+      ).render();
 
       renderJenjangChart();
-    } catch(e) { console.error("Error renderCharts:", e); }
+    } catch (e) {
+      console.error("Error renderCharts:", e);
+    }
   }
 
   function renderJenjangChart() {
     try {
-      var jenjangCount = {}; var totalPegawai = 0;
-      var categories = ['PNS', 'CPNS', 'PPPK'];
-      categories.forEach(function(cat) { 
-          var dataList = dataCache[cat] || []; 
-          dataList.forEach(function(r) { 
-              let label = r._jenjang;
-              if(label) { jenjangCount[label] = (jenjangCount[label] || 0) + 1; totalPegawai++; }
-          }); 
+      var jenjangCount = {};
+      var totalPegawai = 0;
+      var categories = ["PNS", "CPNS", "PPPK"];
+      categories.forEach(function (cat) {
+        var dataList = dataCache[cat] || [];
+        dataList.forEach(function (r) {
+          let label = r._jenjang;
+          if (label) {
+            jenjangCount[label] = (jenjangCount[label] || 0) + 1;
+            totalPegawai++;
+          }
+        });
       });
       if (totalPegawai === 0) return;
-      var sortedLabels = Object.keys(jenjangCount).sort(function(a, b) { return jenjangCount[b] - jenjangCount[a]; });
-      var seriesData = []; sortedLabels.forEach(function(lbl) { seriesData.push(jenjangCount[lbl]); });
-      var optionsDonut = { series: seriesData, labels: sortedLabels, chart: { type: 'donut', height: 350, dropShadow: { enabled: true, color: '#0f172a', top: 4, left: 0, blur: 8, opacity: 0.05 } }, plotOptions: { pie: { customScale: 0.85, offsetY: 10 } }, colors: ['#818cf8', '#60a5fa', '#34d399', '#fbbf24', '#f472b6', '#a78bfa'], fill: { type: 'gradient', gradient: { shade: 'light', type: 'vertical', shadeIntensity: 0.5, opacityFrom: 0.85, opacityTo: 0.65, stops: [0, 100] } }, stroke: { width: 3, colors: ['#ffffff'] }, dataLabels: { enabled: true, dropShadow: { enabled: false }, formatter: function (val) { return val.toFixed(1) + "%"; }, style: { colors: ['#ffffff'], fontWeight: 600, fontSize: '11px' } }, tooltip: { y: { formatter: function(val) { var pct = totalPegawai > 0 ? ((val / totalPegawai) * 100).toFixed(1) : 0; return val + " Pegawai (" + pct + "%)"; } } }, legend: { position: 'bottom', maxHeight: 70, offsetY: 0, itemMargin: { horizontal: 5, vertical: 3 }, markers: { radius: 12 } } };
+      var sortedLabels = Object.keys(jenjangCount).sort(function (a, b) {
+        return jenjangCount[b] - jenjangCount[a];
+      });
+      var seriesData = [];
+      sortedLabels.forEach(function (lbl) {
+        seriesData.push(jenjangCount[lbl]);
+      });
+      var optionsDonut = {
+        series: seriesData,
+        labels: sortedLabels,
+        chart: {
+          type: "donut",
+          height: 350,
+          dropShadow: {
+            enabled: true,
+            color: "#0f172a",
+            top: 4,
+            left: 0,
+            blur: 8,
+            opacity: 0.05,
+          },
+        },
+        plotOptions: { pie: { customScale: 0.85, offsetY: 10 } },
+        colors: [
+          "#818cf8",
+          "#60a5fa",
+          "#34d399",
+          "#fbbf24",
+          "#f472b6",
+          "#a78bfa",
+        ],
+        fill: {
+          type: "gradient",
+          gradient: {
+            shade: "light",
+            type: "vertical",
+            shadeIntensity: 0.5,
+            opacityFrom: 0.85,
+            opacityTo: 0.65,
+            stops: [0, 100],
+          },
+        },
+        stroke: { width: 3, colors: ["#ffffff"] },
+        dataLabels: {
+          enabled: true,
+          dropShadow: { enabled: false },
+          formatter: function (val) {
+            return val.toFixed(1) + "%";
+          },
+          style: { colors: ["#ffffff"], fontWeight: 600, fontSize: "11px" },
+        },
+        tooltip: {
+          y: {
+            formatter: function (val) {
+              var pct =
+                totalPegawai > 0 ? ((val / totalPegawai) * 100).toFixed(1) : 0;
+              return val + " Pegawai (" + pct + "%)";
+            },
+          },
+        },
+        legend: {
+          position: "bottom",
+          maxHeight: 70,
+          offsetY: 0,
+          itemMargin: { horizontal: 5, vertical: 3 },
+          markers: { radius: 12 },
+        },
+      };
       var elContainer = document.querySelector("#chart-jenjang-donut");
-      if (elContainer) { $("#chart-jenjang-donut").empty(); new ApexCharts(elContainer, optionsDonut).render(); }
-    } catch (e) { console.error("Error renderJenjangChart:", e); }
+      if (elContainer) {
+        $("#chart-jenjang-donut").empty();
+        new ApexCharts(elContainer, optionsDonut).render();
+      }
+    } catch (e) {
+      console.error("Error renderJenjangChart:", e);
+    }
   }
 
   function renderHierarchyCharts() {
     try {
-      var container = $('#unit-charts-container'); container.empty(); var unitMap = window.currentUnitMap; if(!unitMap) return; 
-      var allowedRoots = [ "INSPEKTORAT UTAMA", "SEKRETARIAT UTAMA", "DEPUTI BIDANG SISTEM DAN STRATEGI", "DEPUTI BIDANG PENCEGAHAN", "DEPUTI BIDANG PENANGANAN DARURAT", "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI", "DEPUTI BIDANG LOGISTIK DAN PERALATAN", "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN", "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA", "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN" ];
-      var sortedParents = Object.keys(unitMap).sort((a,b) => { if (a.includes("BADAN GIZI NASIONAL")) return 1; if (b.includes("BADAN GIZI NASIONAL")) return -1; var iA = allowedRoots.indexOf(a), iB = allowedRoots.indexOf(b); if(iA !== -1 && iB !== -1) return iA - iB; return iA !== -1 ? -1 : (iB !== -1 ? 1 : a.localeCompare(b)); });
-      var maxVal = 0;
-      sortedParents.forEach(pk => { var pObj = unitMap[pk]; var pTotal = pObj.pns.length + pObj.cpns.length + pObj.pppk.length + pObj.ppnpn.length + pObj.tni.length; if (pTotal > maxVal) maxVal = pTotal; Object.keys(pObj.child).forEach(ck => { var cObj = pObj.child[ck]; var cTotal = cObj.pns.length + cObj.cpns.length + cObj.pppk.length + cObj.ppnpn.length + cObj.tni.length; if (cTotal > maxVal) maxVal = cTotal; }); });
-      if(maxVal === 0) maxVal = 1;
-
-      sortedParents.forEach(parentKey => {
-          if (!allowedRoots.includes(parentKey)) return; 
-          var pObj = unitMap[parentKey]; var chartItems = []; var pTotal = pObj.pns.length + pObj.cpns.length + pObj.pppk.length + pObj.ppnpn.length + pObj.tni.length;
-          if (pTotal > 0) { chartItems.push({ name: pObj.label, val: pTotal, isParent: true }); }
-          var groupedEs2 = {};
-          Object.keys(pObj.child).forEach(ck => { 
-              var cObj = pObj.child[ck]; var cTotal = cObj.pns.length + cObj.cpns.length + cObj.pppk.length + cObj.ppnpn.length + cObj.tni.length; 
-              var es2Name = ck.split(" > ")[0].trim();
-              if(!groupedEs2[es2Name]) groupedEs2[es2Name] = 0; groupedEs2[es2Name] += cTotal;
-          });
-          Object.keys(groupedEs2).forEach(es2 => { chartItems.push({ name: es2, val: groupedEs2[es2], isParent: false }); });
-          chartItems.sort((a, b) => { if (a.isParent) return -1; if (b.isParent) return 1; return a.name.localeCompare(b.name); });
-          var rowsHtml = '';
-          chartItems.forEach(item => { var widthPct = (item.val / maxVal) * 100; if(widthPct < 2 && item.val > 0) widthPct = 2; rowsHtml += `<div class="chart-row-item"><div class="chart-label-col">${item.name}</div><div class="chart-bar-col"><div class="custom-progress"><div class="custom-progress-bar" style="width: ${widthPct}%"></div></div><span class="bar-value">${item.val}</span></div></div>`; });
-          container.append(`<div class="col-lg-6 mb-4 d-flex"><div class="card main-card h-100 w-100"><div class="unit-card-title">${pObj.label}</div><div class="unit-chart-body">${rowsHtml}</div></div></div>`);
+      var container = $("#unit-charts-container");
+      container.empty();
+      var unitMap = window.currentUnitMap;
+      if (!unitMap) return;
+      var allowedRoots = [
+        "INSPEKTORAT UTAMA",
+        "SEKRETARIAT UTAMA",
+        "DEPUTI BIDANG SISTEM DAN STRATEGI",
+        "DEPUTI BIDANG PENCEGAHAN",
+        "DEPUTI BIDANG PENANGANAN DARURAT",
+        "DEPUTI BIDANG REHABILITASI DAN REKONSTRUKSI",
+        "DEPUTI BIDANG LOGISTIK DAN PERALATAN",
+        "PUSAT DATA, INFORMASI DAN KOMUNIKASI KEBENCANAAN",
+        "PUSAT PENDIDIKAN DAN PELATIHAN PENANGGULANGAN BENCANA",
+        "PUSAT PEMBINAAN JABATAN FUNGSIONAL KEBENCANAAN",
+      ];
+      var sortedParents = Object.keys(unitMap).sort((a, b) => {
+        if (a.includes("BADAN GIZI NASIONAL")) return 1;
+        if (b.includes("BADAN GIZI NASIONAL")) return -1;
+        var iA = allowedRoots.indexOf(a),
+          iB = allowedRoots.indexOf(b);
+        if (iA !== -1 && iB !== -1) return iA - iB;
+        return iA !== -1 ? -1 : iB !== -1 ? 1 : a.localeCompare(b);
       });
-    } catch(e) { console.error("Error renderHierarchyCharts:", e); }
+      var maxVal = 0;
+      sortedParents.forEach((pk) => {
+        var pObj = unitMap[pk];
+        var pTotal =
+          pObj.pns.length +
+          pObj.cpns.length +
+          pObj.pppk.length +
+          pObj.ppnpn.length +
+          pObj.tni.length;
+        if (pTotal > maxVal) maxVal = pTotal;
+        Object.keys(pObj.child).forEach((ck) => {
+          var cObj = pObj.child[ck];
+          var cTotal =
+            cObj.pns.length +
+            cObj.cpns.length +
+            cObj.pppk.length +
+            cObj.ppnpn.length +
+            cObj.tni.length;
+          if (cTotal > maxVal) maxVal = cTotal;
+        });
+      });
+      if (maxVal === 0) maxVal = 1;
+
+      sortedParents.forEach((parentKey) => {
+        if (!allowedRoots.includes(parentKey)) return;
+        var pObj = unitMap[parentKey];
+        var chartItems = [];
+        var pTotal =
+          pObj.pns.length +
+          pObj.cpns.length +
+          pObj.pppk.length +
+          pObj.ppnpn.length +
+          pObj.tni.length;
+        if (pTotal > 0) {
+          chartItems.push({ name: pObj.label, val: pTotal, isParent: true });
+        }
+        var groupedEs2 = {};
+        Object.keys(pObj.child).forEach((ck) => {
+          var cObj = pObj.child[ck];
+          var cTotal =
+            cObj.pns.length +
+            cObj.cpns.length +
+            cObj.pppk.length +
+            cObj.ppnpn.length +
+            cObj.tni.length;
+          var es2Name = ck.split(" > ")[0].trim();
+          if (!groupedEs2[es2Name]) groupedEs2[es2Name] = 0;
+          groupedEs2[es2Name] += cTotal;
+        });
+        Object.keys(groupedEs2).forEach((es2) => {
+          chartItems.push({ name: es2, val: groupedEs2[es2], isParent: false });
+        });
+        chartItems.sort((a, b) => {
+          if (a.isParent) return -1;
+          if (b.isParent) return 1;
+          return a.name.localeCompare(b.name);
+        });
+        var rowsHtml = "";
+        chartItems.forEach((item) => {
+          var widthPct = (item.val / maxVal) * 100;
+          if (widthPct < 2 && item.val > 0) widthPct = 2;
+          rowsHtml += `<div class="chart-row-item"><div class="chart-label-col">${item.name}</div><div class="chart-bar-col"><div class="custom-progress"><div class="custom-progress-bar" style="width: ${widthPct}%"></div></div><span class="bar-value">${item.val}</span></div></div>`;
+        });
+        container.append(
+          `<div class="col-lg-6 mb-4 d-flex"><div class="card main-card h-100 w-100"><div class="unit-card-title">${pObj.label}</div><div class="unit-chart-body">${rowsHtml}</div></div></div>`,
+        );
+      });
+    } catch (e) {
+      console.error("Error renderHierarchyCharts:", e);
+    }
   }
 
   // =========================================================
-  // 8. FUNGSI PENJALAN KOTAK POPUP 
+  // 8. FUNGSI PENJALAN KOTAK POPUP
   // =========================================================
   let objekModal;
-  window.addEventListener('DOMContentLoaded', () => {
-    let modalEl = document.getElementById('modalEditAksi');
+  window.addEventListener("DOMContentLoaded", () => {
+    let modalEl = document.getElementById("modalEditAksi");
     if (modalEl) objekModal = new bootstrap.Modal(modalEl);
   });
 
   function bukaModalEdit(idData) {
-    document.getElementById('konten-modal-edit').innerHTML = `<div class="modal-body text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat formulir...</p></div>`;
-    objekModal.show();
+    $("#konten-modal-edit").html(
+      `<div class="modal-body text-center p-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 text-muted">Memuat formulir...</p></div>`,
+    );
+    if (!objekModal) {
+      let modalEl = document.getElementById("modalEditAksi");
+      if (modalEl) objekModal = new bootstrap.Modal(modalEl);
+    }
+    if (objekModal) objekModal.show();
     google.script.run
-      .withSuccessHandler(function(htmlKonten) { document.getElementById('konten-modal-edit').innerHTML = htmlKonten; })
-      .withFailureHandler(function(error) { document.getElementById('konten-modal-edit').innerHTML = `<div class="modal-body text-center p-4"><p class="text-danger">Gagal memuat: ${error.message}</p></div>`; })
-      .ambilKontenHtml('FormEdit');
+      .withSuccessHandler(function (htmlKonten) {
+        $("#konten-modal-edit").html(htmlKonten);
+        if (idData && idData !== "ID-1001") {
+          setTimeout(function () {
+            var inputNip = document.getElementById("cariNip");
+            if (inputNip) {
+              inputNip.value = idData;
+            }
+          }, 200);
+        }
+      })
+      .withFailureHandler(function (error) {
+        $("#konten-modal-edit").html(
+          `<div class="modal-body text-center p-4"><p class="text-danger">Gagal memuat: ${error.message}</p></div>`,
+        );
+      })
+      .ambilKontenHtml("FormEdit");
   }
 
   function openDownloadModal() {
-      if (!window.currentUnitMap || Object.keys(window.currentUnitMap).length === 0) { calculateAllMaps(); generateUnitMatrix(); }
-      var menu = $('#scopeList'); menu.empty();
-      menu.append(`<a href="#" class="list-group-item list-group-item-action fw-bold text-success select-scope py-3" data-val="ALL" data-text="📂 DOWNLOAD SEMUA DATA (GABUNGAN)"><i class="fas fa-file-excel me-2"></i> DOWNLOAD SEMUA DATA (GABUNGAN)</a>`);
-      $('#downloadScopeVal').val('ALL'); 
-      $('#download-desc').html('<i class="fas fa-info-circle me-1 text-primary"></i> Data yang diunduh mencakup <b>SELURUH PEGAWAI</b> di database.');
-      new bootstrap.Modal('#downloadModal').show();
+    if (
+      !window.currentUnitMap ||
+      Object.keys(window.currentUnitMap).length === 0
+    ) {
+      calculateAllMaps();
+      generateUnitMatrix();
+    }
+    var menu = $("#scopeList");
+    menu.empty();
+    menu.append(
+      `<a href="#" class="list-group-item list-group-item-action fw-bold text-success select-scope py-3" data-val="ALL" data-text="📂 DOWNLOAD SEMUA DATA (GABUNGAN)"><i class="fas fa-file-excel me-2"></i> DOWNLOAD SEMUA DATA (GABUNGAN)</a>`,
+    );
+    $("#downloadScopeVal").val("ALL");
+    $("#download-desc").html(
+      '<i class="fas fa-info-circle me-1 text-primary"></i> Data yang diunduh mencakup <b>SELURUH PEGAWAI</b> di database.',
+    );
+    new bootstrap.Modal("#downloadModal").show();
   }
 
-  $(document).on('click', '.select-scope', function(e) {
-      e.preventDefault(); 
-      $('.select-scope').removeClass('active text-white').css({'background-color': '', 'color': '#334155'});
-      $(this).addClass('active text-white').css({'background-color': '#667eea', 'color': '#ffffff'});
-      var val = $(this).data('val'); var text = $(this).data('text');
-      $('#downloadScopeVal').val(val);
-      if(val === 'ALL') { $('#download-desc').html('<i class="fas fa-info-circle me-1 text-primary"></i> Data yang diunduh mencakup <b>SELURUH PEGAWAI</b> di database.'); } 
-      else { var cleanName = text.replace(/↳/g, '').replace(/🏢/g, '').trim(); $('#download-desc').html('<i class="fas fa-filter me-1 text-primary"></i> Data difilter khusus untuk unit: <b>' + cleanName + '</b>.'); }
+  $(document).on("click", ".select-scope", function (e) {
+    e.preventDefault();
+    $(".select-scope")
+      .removeClass("active text-white")
+      .css({ "background-color": "", color: "#334155" });
+    $(this)
+      .addClass("active text-white")
+      .css({ "background-color": "#667eea", color: "#ffffff" });
+    var val = $(this).data("val");
+    var text = $(this).data("text");
+    $("#downloadScopeVal").val(val);
+    if (val === "ALL") {
+      $("#download-desc").html(
+        '<i class="fas fa-info-circle me-1 text-primary"></i> Data yang diunduh mencakup <b>SELURUH PEGAWAI</b> di database.',
+      );
+    } else {
+      var cleanName = text.replace(/↳/g, "").replace(/🏢/g, "").trim();
+      $("#download-desc").html(
+        '<i class="fas fa-filter me-1 text-primary"></i> Data difilter khusus untuk unit: <b>' +
+          cleanName +
+          "</b>.",
+      );
+    }
   });
 
   function executeDownload() {
-      var val = $('#downloadScopeVal').val(); var rawData = []; var fileName = "Data_Pegawai"; var dateStr = new Date().toISOString().slice(0,10);
-      var formatRow = (r, type, no) => {
-          return { "No": no, "Nama Pegawai": r.nama, "Gender": r._gender, "NIP / NI / NRP": (['PNS','CPNS','PPPK'].includes(type)) ? r.nip : "-", "Pangkat / Golongan": (['PNS','CPNS','PPPK'].includes(type)) ? r._pangkat : "-", "Jenis Jabatan": (['PNS','CPNS','PPPK'].includes(type)) ? r._wilayah : "-", "Jabatan": r.jabatan, "Unit Kerja": r.unit_kerja, "Status Pegawai": type === 'PPNPN' ? 'Non-ASN' : type };
+    var val = $("#downloadScopeVal").val();
+    var rawData = [];
+    var fileName = "Data_Pegawai";
+    var dateStr = new Date().toISOString().slice(0, 10);
+    var formatRow = (r, type, no) => {
+      return {
+        No: no,
+        "Nama Pegawai": r.nama,
+        Gender: r._gender,
+        "NIP / NI / NRP": ["PNS", "CPNS", "PPPK"].includes(type) ? r.nip : "-",
+        "Pangkat / Golongan": ["PNS", "CPNS", "PPPK"].includes(type)
+          ? r._pangkat
+          : "-",
+        "Jenis Jabatan": ["PNS", "CPNS", "PPPK"].includes(type)
+          ? r._wilayah
+          : "-",
+        Jabatan: r.jabatan,
+        "Unit Kerja": r.unit_kerja,
+        "Status Pegawai": type === "PPNPN" ? "Non-ASN" : type,
       };
+    };
 
-      if (val === "ALL") {
-          fileName = "Data_Seluruh_Pegawai_BNPB_" + dateStr; var counter = 1;
-          (dataCache.PNS||[]).forEach(r => rawData.push(formatRow(r, 'PNS', counter++)));
-          (dataCache.CPNS||[]).forEach(r => rawData.push(formatRow(r, 'CPNS', counter++)));
-          (dataCache.PPPK||[]).forEach(r => rawData.push(formatRow(r, 'PPPK', counter++)));
-      }
-      if (rawData.length === 0) { alert("Tidak ada data pegawai."); return; }
-      var ws = XLSX.utils.json_to_sheet(rawData); var wscols = []; var range = XLSX.utils.decode_range(ws['!ref']);
-      for (var R = range.s.r; R <= range.e.r; ++R) {
-          for (var C = range.s.c; C <= range.e.c; ++C) {
-              var cell_address = XLSX.utils.encode_cell({r: R, c: C}); var cell = ws[cell_address]; if (!cell) continue;
-              var cellTextLength = cell.v ? String(cell.v).length : 0; if (!wscols[C]) wscols[C] = { wch: 10 }; 
-              if (cellTextLength + 2 > wscols[C].wch) { wscols[C].wch = cellTextLength + 2; } if (wscols[C].wch > 60) wscols[C].wch = 60; 
-              if (!cell.s) cell.s = {};
-              if (R === 0) { cell.s = { font: { bold: true }, alignment: { horizontal: "center", vertical: "center" } }; } 
-              else { if (C === 0) { cell.s = { alignment: { horizontal: "center", vertical: "center" } }; } else { cell.s = { alignment: { horizontal: "left", vertical: "center" } }; } }
+    if (val === "ALL") {
+      fileName = "Data_Seluruh_Pegawai_BNPB_" + dateStr;
+      var counter = 1;
+      (dataCache.PNS || []).forEach((r) =>
+        rawData.push(formatRow(r, "PNS", counter++)),
+      );
+      (dataCache.CPNS || []).forEach((r) =>
+        rawData.push(formatRow(r, "CPNS", counter++)),
+      );
+      (dataCache.PPPK || []).forEach((r) =>
+        rawData.push(formatRow(r, "PPPK", counter++)),
+      );
+    }
+    if (rawData.length === 0) {
+      alert("Tidak ada data pegawai.");
+      return;
+    }
+    var ws = XLSX.utils.json_to_sheet(rawData);
+    var wscols = [];
+    var range = XLSX.utils.decode_range(ws["!ref"]);
+    for (var R = range.s.r; R <= range.e.r; ++R) {
+      for (var C = range.s.c; C <= range.e.c; ++C) {
+        var cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+        var cell = ws[cell_address];
+        if (!cell) continue;
+        var cellTextLength = cell.v ? String(cell.v).length : 0;
+        if (!wscols[C]) wscols[C] = { wch: 10 };
+        if (cellTextLength + 2 > wscols[C].wch) {
+          wscols[C].wch = cellTextLength + 2;
+        }
+        if (wscols[C].wch > 60) wscols[C].wch = 60;
+        if (!cell.s) cell.s = {};
+        if (R === 0) {
+          cell.s = {
+            font: { bold: true },
+            alignment: { horizontal: "center", vertical: "center" },
+          };
+        } else {
+          if (C === 0) {
+            cell.s = {
+              alignment: { horizontal: "center", vertical: "center" },
+            };
+          } else {
+            cell.s = { alignment: { horizontal: "left", vertical: "center" } };
           }
+        }
       }
-      ws['!cols'] = wscols; var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Data Pegawai"); XLSX.writeFile(wb, fileName + ".xlsx");
-      var modalEl = document.getElementById('downloadModal'); var modal = bootstrap.Modal.getInstance(modalEl); modal.hide();
+    }
+    ws["!cols"] = wscols;
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Data Pegawai");
+    XLSX.writeFile(wb, fileName + ".xlsx");
+    var modalEl = document.getElementById("downloadModal");
+    var modal = bootstrap.Modal.getInstance(modalEl);
+    modal.hide();
   }
 
-  function openContactModal() { new bootstrap.Modal('#contactModal').show(); }
+  function openContactModal() {
+    new bootstrap.Modal("#contactModal").show();
+  }
 
   // =========================================================
-  // 9. FUNGSI TEMA MUSIMAN 
+  // 9. FUNGSI TEMA MUSIMAN
   // =========================================================
   function applySeasonalTheme() {
-      var now = new Date();
-      var m = now.getMonth(); 
-      var d = now.getDate();
+    var now = new Date();
+    var m = now.getMonth();
+    var d = now.getDate();
 
-      var isRamadhan = false; var isIdulFitri = false; var isHUTRI = false; var isTahunBaru = false;
-      if (now >= new Date(2026, 1, 18) && now <= new Date(2026, 2, 19, 23, 59, 59)) isRamadhan = true;
-      if (now >= new Date(2026, 2, 20) && now <= new Date(2026, 3, 3, 23, 59, 59)) isIdulFitri = true;
-      if (m === 7 && d >= 10 && d <= 20) isHUTRI = true;
-      if ((m === 11 && d >= 25) || (m === 0 && d <= 5)) isTahunBaru = true;
+    var isRamadhan = false;
+    var isIdulFitri = false;
+    var isHUTRI = false;
+    var isTahunBaru = false;
+    if (
+      now >= new Date(2026, 1, 18) &&
+      now <= new Date(2026, 2, 19, 23, 59, 59)
+    )
+      isRamadhan = true;
+    if (now >= new Date(2026, 2, 20) && now <= new Date(2026, 3, 3, 23, 59, 59))
+      isIdulFitri = true;
+    if (m === 7 && d >= 10 && d <= 20) isHUTRI = true;
+    if ((m === 11 && d >= 25) || (m === 0 && d <= 5)) isTahunBaru = true;
 
-      var theme = null;
+    var theme = null;
 
-      if (isRamadhan) theme = { id: 'ramadhan', icon: 'fa-moon', title: 'Marhaban Ya Ramadhan', subText: 'Ramadhan Kareem', color: '#f59e0b, #d97706', shadow: 'rgba(245, 158, 11, 0.3)', text: '#fde68a', mobileIcon: 'text-warning', loadBg: 'rgba(255, 251, 235, 0.95)', iconColor: 'rgba(245, 158, 11, 0.05)', starColor: '#f59e0b', rotate: '-15deg' };
-      else if (isIdulFitri) theme = { id: 'idulfitri', icon: 'fa-mosque', title: 'Minal Aidin wal Faizin', subText: 'Selamat Idul Fitri', color: '#10b981, #059669', shadow: 'rgba(16, 185, 129, 0.3)', text: '#a7f3d0', mobileIcon: 'text-success', loadBg: 'rgba(236, 253, 245, 0.95)', iconColor: 'rgba(16, 185, 129, 0.05)', starColor: '#10b981', rotate: '15deg' };
-      else if (isHUTRI) theme = { id: 'hutri', icon: 'fa-flag', title: 'Dirgahayu Republik Indonesia', subText: 'Merdeka!', color: '#ef4444, #b91c1c', shadow: 'rgba(239, 68, 68, 0.3)', text: '#fca5a5', mobileIcon: 'text-danger', loadBg: 'rgba(254, 242, 242, 0.95)', iconColor: 'rgba(239, 68, 68, 0.05)', starColor: '#ef4444', rotate: '0deg' };
-      else if (isTahunBaru) theme = { id: 'tahunbaru', icon: 'fa-glass-cheers', title: 'Selamat Tahun Baru', subText: 'Tahun Baru, Semangat Baru!', color: '#3b82f6, #1d4ed8', shadow: 'rgba(59, 130, 246, 0.3)', text: '#bfdbfe', mobileIcon: 'text-primary', loadBg: 'rgba(239, 246, 255, 0.95)', iconColor: 'rgba(59, 130, 246, 0.05)', starColor: '#3b82f6', rotate: '10deg' };
+    if (isRamadhan)
+      theme = {
+        id: "ramadhan",
+        icon: "fa-moon",
+        title: "Marhaban Ya Ramadhan",
+        subText: "Ramadhan Kareem",
+        color: "#f59e0b, #d97706",
+        shadow: "rgba(245, 158, 11, 0.3)",
+        text: "#fde68a",
+        mobileIcon: "text-warning",
+        loadBg: "rgba(255, 251, 235, 0.95)",
+        iconColor: "rgba(245, 158, 11, 0.05)",
+        starColor: "#f59e0b",
+        rotate: "-15deg",
+      };
+    else if (isIdulFitri)
+      theme = {
+        id: "idulfitri",
+        icon: "fa-mosque",
+        title: "Minal Aidin wal Faizin",
+        subText: "Selamat Idul Fitri",
+        color: "#10b981, #059669",
+        shadow: "rgba(16, 185, 129, 0.3)",
+        text: "#a7f3d0",
+        mobileIcon: "text-success",
+        loadBg: "rgba(236, 253, 245, 0.95)",
+        iconColor: "rgba(16, 185, 129, 0.05)",
+        starColor: "#10b981",
+        rotate: "15deg",
+      };
+    else if (isHUTRI)
+      theme = {
+        id: "hutri",
+        icon: "fa-flag",
+        title: "Dirgahayu Republik Indonesia",
+        subText: "Merdeka!",
+        color: "#ef4444, #b91c1c",
+        shadow: "rgba(239, 68, 68, 0.3)",
+        text: "#fca5a5",
+        mobileIcon: "text-danger",
+        loadBg: "rgba(254, 242, 242, 0.95)",
+        iconColor: "rgba(239, 68, 68, 0.05)",
+        starColor: "#ef4444",
+        rotate: "0deg",
+      };
+    else if (isTahunBaru)
+      theme = {
+        id: "tahunbaru",
+        icon: "fa-glass-cheers",
+        title: "Selamat Tahun Baru",
+        subText: "Tahun Baru, Semangat Baru!",
+        color: "#3b82f6, #1d4ed8",
+        shadow: "rgba(59, 130, 246, 0.3)",
+        text: "#bfdbfe",
+        mobileIcon: "text-primary",
+        loadBg: "rgba(239, 246, 255, 0.95)",
+        iconColor: "rgba(59, 130, 246, 0.05)",
+        starColor: "#3b82f6",
+        rotate: "10deg",
+      };
 
-      if (theme) {
-          $('<style>').prop('type', 'text/css').html(`
+    if (theme) {
+      $("<style>")
+        .prop("type", "text/css")
+        .html(
+          `
               .seasonal-badge { font-size: 0.7rem; background: linear-gradient(135deg, ${theme.color}); color: #fff; padding: 4px 12px; border-radius: 50px; font-weight: 600; letter-spacing: 0.5px; box-shadow: 0 4px 10px ${theme.shadow}; display: inline-flex; align-items: center; white-space: nowrap; margin-left: 10px; }
               .seasonal-badge i { font-size: 0.8rem; margin-right: 5px; }
               .sidebar-seasonal-text { font-size: 0.65rem; color: ${theme.text}; font-weight: 600; letter-spacing: 1px; margin-top: 8px; text-transform: uppercase; display: block; }
@@ -1290,30 +2557,367 @@ $(document).ready(function() {
               .seasonal-bg-icon { position: absolute; font-size: 35rem; color: ${theme.iconColor}; top: -5%; right: -10%; pointer-events: none; z-index: -1; animation: pulse-moon 6s ease-in-out infinite alternate; }
               @keyframes twinkle-star { 0% { opacity: 0.1; transform: scale(0.8) translateY(0); } 100% { opacity: 0.6; transform: scale(1.2) translateY(-10px); } }
               @keyframes pulse-moon { 0% { transform: scale(1) rotate(-5deg); } 100% { transform: scale(1.05) rotate(5deg); } }
-            `).appendTo('head');
+            `,
+        )
+        .appendTo("head");
 
-          $('.sidebar-header').append('<div class="sidebar-seasonal-text"><i class="fas ' + theme.icon + '"></i> ' + theme.subText + '</div>');
-          $('#sidebar').append('<i class="fas ' + theme.icon + ' seasonal-ornament-bg"></i>');
-          var h4Elem = $('.card-header-area h4');
-          if(h4Elem.length) h4Elem.addClass('d-flex align-items-center').append('<span class="seasonal-badge"><i class="fas ' + theme.icon + '"></i> ' + theme.title + '</span>');
-          $('.mobile-title').append('<i class="fas ' + theme.icon + ' ' + theme.mobileIcon + ' ms-1" style="font-size: 0.8rem;"></i>');
+      $(".sidebar-header").append(
+        '<div class="sidebar-seasonal-text"><i class="fas ' +
+          theme.icon +
+          '"></i> ' +
+          theme.subText +
+          "</div>",
+      );
+      $("#sidebar").append(
+        '<i class="fas ' + theme.icon + ' seasonal-ornament-bg"></i>',
+      );
+      var h4Elem = $(".card-header-area h4");
+      if (h4Elem.length)
+        h4Elem
+          .addClass("d-flex align-items-center")
+          .append(
+            '<span class="seasonal-badge"><i class="fas ' +
+              theme.icon +
+              '"></i> ' +
+              theme.title +
+              "</span>",
+          );
+      $(".mobile-title").append(
+        '<i class="fas ' +
+          theme.icon +
+          " " +
+          theme.mobileIcon +
+          ' ms-1" style="font-size: 0.8rem;"></i>',
+      );
 
-          if (theme.id === 'ramadhan') { $('#jam-normal').hide(); $('#jam-ramadhan').show(); }
-
-          $('#loading').addClass('seasonal-load-bg');
-          $('#loading').prepend('<i class="fas ' + theme.icon + ' seasonal-bg-icon"></i>');
-          for(var i = 0; i < 10; i++) {
-              var top = Math.random() * 100 + '%'; var left = Math.random() * 100 + '%';
-              var dur = (Math.random() * 2 + 1.5) + 's'; var delay = '-' + (Math.random() * 2) + 's'; var size = (Math.random() * 1 + 0.5) + 'rem';
-              $('#loading').prepend('<i class="fas fa-star seasonal-star" style="top:'+top+'; left:'+left+'; font-size:'+size+'; --dur:'+dur+'; animation-delay:'+delay+';"></i>');
-          }
+      if (theme.id === "ramadhan") {
+        $("#jam-normal").hide();
+        $("#jam-ramadhan").show();
       }
+
+      $("#loading").addClass("seasonal-load-bg");
+      $("#loading").prepend(
+        '<i class="fas ' + theme.icon + ' seasonal-bg-icon"></i>',
+      );
+      for (var i = 0; i < 10; i++) {
+        var top = Math.random() * 100 + "%";
+        var left = Math.random() * 100 + "%";
+        var dur = Math.random() * 2 + 1.5 + "s";
+        var delay = "-" + Math.random() * 2 + "s";
+        var size = Math.random() * 1 + 0.5 + "rem";
+        $("#loading").prepend(
+          '<i class="fas fa-star seasonal-star" style="top:' +
+            top +
+            "; left:" +
+            left +
+            "; font-size:" +
+            size +
+            "; --dur:" +
+            dur +
+            "; animation-delay:" +
+            delay +
+            ';"></i>',
+        );
+      }
+    }
   }
 
-  function openFormModal() { document.getElementById("modalForm").style.display = "flex"; }
-  function closeFormModal() { document.getElementById("modalForm").style.display = "none"; }
-  window.addEventListener('click', function(event) {
+  function openFormModal() {
+    document.getElementById("modalForm").style.display = "flex";
+  }
+  function closeFormModal() {
+    document.getElementById("modalForm").style.display = "none";
+  }
+  window.addEventListener("click", function (event) {
     var modalForm = document.getElementById("modalForm");
     if (event.target == modalForm) modalForm.style.display = "none";
+  });
+
+  // =========================================================
+  // 10. LOGIKA ROLE ADMIN & UPDATE STATUS INTERAKTIF
+  // =========================================================
+
+  // Cek apakah browser saat ini dalam mode Admin (dari sessionStorage)
+  function isUserAdmin() {
+    return sessionStorage.getItem("isAdmin") === "true";
+  }
+
+  // Perbarui UI tombol admin di sidebar dan notifikasi
+  function updateAdminRoleUI(showNotification) {
+    var adminActive = isUserAdmin();
+    var btn = $("#btn-admin-role");
+    var txt = $("#btn-admin-text");
+    var icon = $("#btn-admin-icon");
+    var badge = $("#admin-badge-indicator");
+
+    if (adminActive) {
+      btn
+        .addClass("is-admin")
+        .attr("title", "Klik untuk keluar dari mode admin");
+      txt.text("Keluar dari Admin");
+      icon.attr("class", "fas fa-sign-out-alt me-2");
+      badge.fadeIn(200);
+      if (showNotification) {
+        showAppToast(
+          "<b>Akses Admin Aktif!</b> Menu dropdown aksi dan update status pegawai telah dibuka.",
+          "success",
+        );
+      }
+    } else {
+      btn.removeClass("is-admin").attr("title", "Masuk Role Admin");
+      txt.text("Role Admin");
+      icon.attr("class", "fas fa-user-shield me-2");
+      badge.hide();
+      if (showNotification) {
+        showAppToast(
+          "<b>Keluar dari Mode Admin.</b> Tampilan aksi kembali ke pensil biasa.",
+          "info",
+        );
+      }
+    }
+
+    // Refresh tabel yang aktif agar kolom aksi langsung menyesuaikan status role
+    try {
+      if (typeof loadData === "function") {
+        var activeTab = window.currentActiveType || "PNS";
+        if ($("#page-data").is(":visible")) {
+          loadData(activeTab);
+        }
+      }
+    } catch (e) {
+      console.warn("Table refresh error:", e);
+    }
+  }
+
+  // Handle klik tombol Role Admin di sidebar
+  function handleAdminRoleButtonClick() {
+    if (isUserAdmin()) {
+      // Keluar dari mode admin
+      sessionStorage.removeItem("isAdmin");
+      updateAdminRoleUI(true);
+    } else {
+      // Buka modal login admin
+      $("#inputKodeAdmin").val("");
+      $("#adminLoginError").addClass("d-none").removeClass("d-flex");
+      $("#inputKodeAdmin").removeClass("is-invalid");
+      var modalEl = document.getElementById("modalAdminLogin");
+      if (modalEl) {
+        var modal = new bootstrap.Modal(modalEl);
+        modal.show();
+        setTimeout(function () {
+          $("#inputKodeAdmin").focus();
+        }, 400);
+      }
+    }
+  }
+
+  // Verifikasi input kode akses admin
+  function prosesVerifikasiAdmin() {
+    var kode = ($("#inputKodeAdmin").val() || "").trim();
+    if (kode === "admin123") {
+      sessionStorage.setItem("isAdmin", "true");
+      var modalEl = document.getElementById("modalAdminLogin");
+      if (modalEl) {
+        var modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+      }
+      updateAdminRoleUI(true);
+    } else {
+      $("#adminLoginError").removeClass("d-none").addClass("d-flex");
+      $("#inputKodeAdmin").addClass("is-invalid").focus();
+    }
+  }
+
+  // Toggle sensor lihat password admin
+  function toggleLihatKodeAdmin() {
+    var input = document.getElementById("inputKodeAdmin");
+    var icon = document.getElementById("iconEyeAdmin");
+    if (!input) return;
+    if (input.type === "password") {
+      input.type = "text";
+      if (icon) icon.className = "fas fa-eye-slash text-primary";
+    } else {
+      input.type = "password";
+      if (icon) icon.className = "fas fa-eye text-muted";
+    }
+  }
+
+  // Render HTML Dropdown Aksi Khusus Admin (Persis Sesuai Gambar Acuan)
+  function renderAdminDropdownAksi(row) {
+    return `
+      <div class="dropdown d-inline-block">
+        <button class="btn btn-light btn-sm action-kebab-btn shadow-sm" type="button" data-bs-toggle="dropdown" data-bs-popper-config='{"strategy":"fixed"}' aria-expanded="false" title="Menu Aksi Pegawai">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end action-dropdown-menu shadow-lg">
+          <li class="action-dropdown-header">
+            <i class="fas fa-user-cog me-2"></i>AKSI PEGAWAI
+          </li>
+          <li>
+            <a class="dropdown-item action-dropdown-item action-item-edit" href="javascript:void(0)" onclick="handleAksiEdit(this)">
+              <i class="fas fa-edit me-2"></i>Edit Data Pegawai
+            </a>
+          </li>
+          <li><hr class="action-dropdown-divider"></li>
+          <li class="action-dropdown-header">
+            <i class="fas fa-history me-2"></i>UPDATE STATUS PEGAWAI
+          </li>
+          <li>
+            <a class="dropdown-item action-dropdown-item action-item-sementara" href="javascript:void(0)" onclick="handleAksiStatus(this, 'Pemberhentian Sementara')">
+              <i class="fas fa-pause-circle me-2"></i>Pemberhentian Sementara
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item action-dropdown-item action-item-tetap" href="javascript:void(0)" onclick="handleAksiStatus(this, 'Pemberhentian Tetap')">
+              <i class="fas fa-times-circle me-2"></i>Pemberhentian Tetap
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item action-dropdown-item action-item-pensiun" href="javascript:void(0)" onclick="handleAksiStatus(this, 'Pensiun')">
+              <i class="fas fa-user-clock me-2"></i>Pensiun
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item action-dropdown-item action-item-meninggal" href="javascript:void(0)" onclick="handleAksiStatus(this, 'Meninggal Dunia')">
+              <i class="fas fa-dove me-2"></i>Meninggal Dunia
+            </a>
+          </li>
+        </ul>
+      </div>
+    `;
+  }
+
+  // Handle klik Edit Data Pegawai dari dropdown
+  function handleAksiEdit(element) {
+    var tr = $(element).closest("tr");
+    var isDrilldown = $(element).closest("#drilldownTable").length > 0;
+    var tableObj = isDrilldown
+      ? $("#drilldownTable").DataTable()
+      : $("#mainTable").DataTable();
+    var rowData = tableObj.row(tr).data();
+    var nip =
+      rowData && (rowData.nip || rowData._nip)
+        ? rowData.nip || rowData._nip
+        : "ID-1001";
+    bukaModalEdit(nip);
+  }
+
+  // Target penampung status update sementara
+  var statusUpdateContext = {
+    rowData: null,
+    tr: null,
+    tableObj: null,
+    statusBaru: "",
+  };
+
+  // Handle klik salah satu status dari dropdown
+  function handleAksiStatus(element, statusBaru) {
+    var tr = $(element).closest("tr");
+    var isDrilldown = $(element).closest("#drilldownTable").length > 0;
+    var tableObj = isDrilldown
+      ? $("#drilldownTable").DataTable()
+      : $("#mainTable").DataTable();
+    var rowData = tableObj.row(tr).data();
+    if (!rowData) return;
+
+    statusUpdateContext = {
+      rowData: rowData,
+      tr: tr,
+      tableObj: tableObj,
+      statusBaru: statusBaru,
+    };
+
+    $("#modalStatusNamaPegawai").text(rowData.nama || "-");
+    $("#modalStatusNipPegawai").text(rowData.nip || rowData._nip || "-");
+    $("#modalStatusUnitKerja").text(rowData.unit_kerja || "-");
+
+    var badgeHtml = getStatusBadgeHtml(statusBaru, true);
+    $("#modalStatusBadgeTarget").html(badgeHtml);
+
+    var modalEl = document.getElementById("modalKonfirmasiStatus");
+    if (modalEl) {
+      var modal = new bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  // Eksekusi update status pegawai setelah konfirmasi
+  function eksekusiUbahStatus() {
+    if (!statusUpdateContext.rowData) return;
+
+    var statusBaru = statusUpdateContext.statusBaru;
+    var namaPegawai = statusUpdateContext.rowData.nama || "Pegawai";
+
+    // Update status khusus di data lokal/memori secara interaktif
+    statusUpdateContext.rowData._statusKhusus = statusBaru;
+
+    // Perbarui baris tabel DataTables seketika tanpa reload halaman
+    statusUpdateContext.tableObj
+      .row(statusUpdateContext.tr)
+      .invalidate()
+      .draw(false);
+
+    // Tutup popup modal konfirmasi
+    var modalEl = document.getElementById("modalKonfirmasiStatus");
+    if (modalEl) {
+      var modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) modalInstance.hide();
+    }
+
+    showAppToast(
+      `Status pegawai <b>${namaPegawai}</b> berhasil diubah menjadi <b>${statusBaru}</b>!`,
+      "success",
+    );
+  }
+
+  // Generator badge status dengan desain warna harmonis
+  function getStatusBadgeHtml(status, isLarge) {
+    var fontSize = isLarge ? "0.85rem" : "0.72rem";
+    var padding = isLarge ? "6px 14px" : "3px 8px";
+    if (status === "Pemberhentian Sementara") {
+      return `<span class="badge shadow-sm" style="background:#fef3c7; color:#b45309; border: 1px solid #fde68a; font-size:${fontSize}; padding:${padding}; border-radius: 8px; font-weight:700;"><i class="fas fa-pause-circle me-1"></i>Pemberhentian Sementara</span>`;
+    } else if (status === "Pemberhentian Tetap") {
+      return `<span class="badge shadow-sm" style="background:#fee2e2; color:#dc2626; border: 1px solid #fecaca; font-size:${fontSize}; padding:${padding}; border-radius: 8px; font-weight:700;"><i class="fas fa-times-circle me-1"></i>Pemberhentian Tetap</span>`;
+    } else if (status === "Pensiun") {
+      return `<span class="badge shadow-sm" style="background:#dbeafe; color:#2563eb; border: 1px solid #bfdbfe; font-size:${fontSize}; padding:${padding}; border-radius: 8px; font-weight:700;"><i class="fas fa-user-clock me-1"></i>Pensiun</span>`;
+    } else if (status === "Meninggal Dunia") {
+      return `<span class="badge shadow-sm" style="background:#f1f5f9; color:#334155; border: 1px solid #cbd5e1; font-size:${fontSize}; padding:${padding}; border-radius: 8px; font-weight:700;"><i class="fas fa-dove me-1"></i>Meninggal Dunia</span>`;
+    }
+    return `<span class="badge bg-secondary" style="font-size:${fontSize};">${status}</span>`;
+  }
+
+  // Notifikasi Toast Melayang
+  function showAppToast(message, type) {
+    var toastEl = document.getElementById("globalAppToast");
+    if (!toastEl) return;
+    var icon = $("#toastIcon");
+    if (type === "success") {
+      toastEl.style.background =
+        "linear-gradient(135deg, #059669 0%, #10b981 100%)";
+      icon.attr("class", "fas fa-check-circle fs-5");
+    } else if (type === "danger") {
+      toastEl.style.background =
+        "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+      icon.attr("class", "fas fa-exclamation-circle fs-5");
+    } else {
+      toastEl.style.background =
+        "linear-gradient(135deg, #1e293b 0%, #334155 100%)";
+      icon.attr("class", "fas fa-info-circle fs-5");
+    }
+    $("#toastMessage").html(message);
+    var toast = new bootstrap.Toast(toastEl, { delay: 4000 });
+    toast.show();
+  }
+
+  // Event listener Enter key pada input kode admin
+  $(document).on("keypress", "#inputKodeAdmin", function (e) {
+    if (e.which === 13) {
+      prosesVerifikasiAdmin();
+    }
+  });
+
+  $(document).on("input", "#inputKodeAdmin", function () {
+    $("#adminLoginError").addClass("d-none").removeClass("d-flex");
+    $(this).removeClass("is-invalid");
   });
 </script>
