@@ -147,15 +147,6 @@ function buildHtml() {
               } else if (prop === 'verifyAdminPassword') {
                 const inputPw = args[0];
                 setTimeout(() => onSuccess({ valid: inputPw === 'admin123' }), 150);
-              } else if (prop === 'updateStatusPegawai') {
-                const [nip, type, statusBaru] = args;
-                const targetList = (type === 'PPPK') ? dummyPPPK : dummyPNS;
-                const found = targetList.find(item => item.nip === nip);
-                if (found) {
-                  found.status_pegawai = statusBaru;
-                  found.jenis_jabatan = statusBaru;
-                }
-                setTimeout(() => onSuccess({ success: true, message: "Status berhasil diubah ke: " + statusBaru }), 250);
               } else if (prop === 'updateDataPegawaiMassal') {
                 setTimeout(() => onSuccess("SUKSES"), 200);
               } else if (prop === 'unggahFileMultiKomponen') {

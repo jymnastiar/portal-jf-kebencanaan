@@ -195,39 +195,20 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
 
   function eksekusiUbahStatus() {
     if (!window.pendingStatusUpdate) return;
-    const { nip, nama, statusBaru, type } = window.pendingStatusUpdate;
+    const { nip, nama, statusBaru } = window.pendingStatusUpdate;
     const btn = $('#btnExecuteStatusChange');
-    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan ke Database...');
+    btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Menyimpan...');
 
-    google.script.run
-      .withSuccessHandler(function(res) {
-        btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
-        if (res && res.success) {
-          // Update data lokal di dataCache
-          if (dataCache[type]) {
-            dataCache[type].forEach(item => {
-              if (item.nip && String(item.nip).replace(/\s+/g, '') === String(nip).replace(/\s+/g, '')) {
-                item.status_pegawai = statusBaru;
-                item._status = statusBaru;
-              }
-            });
-          }
-          const modalEl = document.getElementById('statusConfirmModal');
-          if (modalEl) {
-            const modal = bootstrap.Modal.getInstance(modalEl);
-            if (modal) modal.hide();
-          }
-          loadData(type);
-          showToastAlert(`Status untuk <strong>${nama}</strong> berhasil diperbarui menjadi <strong>${statusBaru}</strong> di Google Sheets!`, 'success');
-        } else {
-          $('#statusUpdateAlert').removeClass('d-none').html(`<div class="alert alert-danger p-2 mb-0" style="font-size:0.8rem;"><i class="fas fa-times-circle me-1"></i>${(res && res.message) ? res.message : 'Gagal memperbarui status.'}</div>`);
-        }
-      })
-      .withFailureHandler(function(err) {
-        btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
-        $('#statusUpdateAlert').removeClass('d-none').html(`<div class="alert alert-danger p-2 mb-0" style="font-size:0.8rem;"><i class="fas fa-times-circle me-1"></i>Error: ${err.message}</div>`);
-      })
-      .updateStatusPegawai(nip, type, statusBaru);
+    // Simulasi respons cepat tanpa menulis/mengubah ke spreadsheet atau mengubah tabel
+    setTimeout(function() {
+      btn.prop('disabled', false).html('<i class="fas fa-check-circle me-1"></i>Ya, Simpan Perubahan');
+      const modalEl = document.getElementById('statusConfirmModal');
+      if (modalEl) {
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+      }
+      showToastAlert(`Aksi perubahan status untuk <strong>${nama || nip}</strong> berhasil diproses.`, 'success');
+    }, 400);
   }
 
   function showToastAlert(pesan, jenis) {
@@ -427,7 +408,7 @@ $(document).ready(function() {
                 var rawNama = (row.nama || "").replace(/'/g, "\\'");
                 
                 if (!window.isAdmin) {
-                    return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${rawNip}')" title="Update Data"><i class="fa-solid fa-pen-to-square"></i></button>`;
+                    return `<button class="btn btn-warning btn-sm text-white shadow-sm" onclick="bukaModalEdit('${rawNip}')" title="Edit Data Pegawai"><i class="fa-solid fa-pen-to-square"></i></button>`;
                 }
 
                 return `
