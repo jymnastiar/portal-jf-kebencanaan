@@ -43,7 +43,7 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
     <!-- 🎨 MENYUNTIKKAN FILE CAT & WARNA KITA (CSS) -->
     <?!= include('Style'); ?>
   </head>
-  <body>
+  <body class="view-visual">
     <!-- 1. TAMPILAN LOADING AWAL (Layar putih berputar) -->
     <div id="loading">
       <img
@@ -75,7 +75,7 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
         />
         <div
           class="mobile-title"
-          style="text-align: left; font-size: 0.95rem; white-space: nowrap"
+          style="text-align: left; font-size: 0.8rem; white-space: nowrap"
         >
           PORTAL DATA JF KEBENCANAAN
         </div>
@@ -87,7 +87,15 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
       <!-- MENU SAMPING KIRI (SIDEBAR) -->
       <nav id="sidebar">
         <div id="sidebar-content-wrapper">
-          <div class="sidebar-header">
+          <div class="sidebar-header position-relative">
+            <button
+              type="button"
+              id="sidebar-close-btn"
+              class="sidebar-mobile-close"
+              aria-label="Tutup Menu"
+            >
+              <i class="fas fa-times"></i>
+            </button>
             <img
               src="https://drive.google.com/thumbnail?id=1ERfOnbrNMlkGsmAzzLe_nLwbjb_9cN8w&sz=w500"
               alt="Logo BNPB"
@@ -122,7 +130,7 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
                 ><i class="fas fa-folder-plus"></i> Tambah Data</a
               >
             </li>
-            <li>
+            <li id="menu-download-item" style="display: none;">
               <a onclick="openDownloadModal()" id="menu-download"
                 ><i class="fas fa-file-export"></i> Download Data</a
               >
@@ -1125,31 +1133,29 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
           </div>
 
           <!-- HALAMAN 3: DIAGRAM / VISUAL -->
-          <div
-            id="page-visual"
-            class="main-page"
-            style="display: block; overflow-x: hidden"
-          >
-            <!-- IFRAME VERSI DESKTOP -->
+          <div id="page-visual" class="main-page" style="display: none">
+            <!-- IFRAME VERSI DESKTOP (> 1024px) -->
             <iframe
               id="frame-desktop"
               data-src="https://datastudio.google.com/embed/reporting/99faf6ae-33fc-4428-b4d0-7874c5bd1361/page/x5G8F"
               allowfullscreen
-              style="
-                width: 100%;
-                height: calc(100vh - 90px);
-                border: none;
-                display: block;
-              "
               sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
             >
             </iframe>
 
-            <!-- IFRAME VERSI MOBILE -->
+            <!-- IFRAME VERSI TAB / TABLET (769px - 1024px) -->
+            <iframe
+              id="frame-tab"
+              data-src="https://datastudio.google.com/embed/reporting/e51b047d-8a3e-42fd-81ed-e84f3fe72b8f/page/x5G8F"
+              allowfullscreen
+              sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+            >
+            </iframe>
+
+            <!-- IFRAME VERSI MOBILE / HP (<= 768px) -->
             <iframe
               id="frame-mobile"
-              data-src="https://datastudio.google.com/embed/reporting/e51b047d-8a3e-42fd-81ed-e84f3fe72b8f/page/x5G8F"
-              style="width: 100%; height: 1450px; border: none; display: none"
+              data-src="https://datastudio.google.com/embed/reporting/bb3a3ed7-86c7-423b-a5ab-358ad8d6eca0"
               allowfullscreen
               sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
             >
@@ -1486,11 +1492,14 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
           style="border-radius: 20px; overflow: hidden"
         >
           <div
-            class="modal-header border-0 pb-0"
+            class="modal-header border-0"
             style="
               background: linear-gradient(135deg, #4b3869 0%, #667eea 100%);
               color: white;
-              padding: 22px 25px 20px;
+              padding: 20px 24px;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
             "
           >
             <div class="d-flex align-items-center gap-3">
@@ -1498,6 +1507,7 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
                 style="
                   width: 44px;
                   height: 44px;
+                  min-width: 44px;
                   border-radius: 12px;
                   background: rgba(255, 255, 255, 0.2);
                   display: flex;
@@ -1508,24 +1518,25 @@ lalu memanggil warna dari file 'Style.html' dan mesin dari file 'Script.html'.
               >
                 <i class="fas fa-user-shield"></i>
               </div>
-              <div>
+              <div class="d-flex flex-column justify-content-center">
                 <h6
                   class="modal-title fw-bold m-0"
                   id="modalAdminLoginLabel"
-                  style="font-size: 1.05rem"
+                  style="font-size: 1.05rem; line-height: 1.3"
                 >
                   Akses Role Admin
                 </h6>
-                <small style="opacity: 0.85; font-size: 0.75rem"
+                <small style="opacity: 0.85; font-size: 0.75rem; margin-top: 2px"
                   >Verifikasi kode otorisasi administrator</small
                 >
               </div>
             </div>
             <button
               type="button"
-              class="btn-close btn-close-white"
+              class="btn-close btn-close-white m-0"
               data-bs-dismiss="modal"
               aria-label="Close"
+              style="align-self: center"
             ></button>
           </div>
           <div class="modal-body p-4 bg-white">

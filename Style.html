@@ -573,33 +573,7 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
     display: block;
     padding-bottom: 20px;
   }
-  #page-visual {
-    height: auto;
-    display: block;
-    padding-bottom: 0px;
-    width: 100%;
-    overflow-x: hidden;
-  }
-
-  .wrapper-looker {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 12px;
-    overflow: visible;
-    background: transparent;
-  }
-  #frame-desktop {
-    width: 100%;
-    height: 1550px;
-    border: none;
-    display: block;
-  }
-  #frame-mobile {
-    display: none;
-  }
-
-  #page-rekap .main-card,
-  #page-visual .main-card {
+  #page-rekap .main-card {
     height: auto !important;
     overflow: visible !important;
     flex: none;
@@ -858,7 +832,7 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
     font-size: 4rem;
     font-weight: 800;
     background: var(--primary-gradient);
-    -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1;
     margin-bottom: 10px;
@@ -1058,6 +1032,40 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
     color: #0f172a !important;
   }
 
+  /* Tombol Tutup (X) Sidebar - Default disembunyikan di Desktop */
+  .sidebar-mobile-close {
+    display: none;
+  }
+
+  /* Pastikan seluruh Modal Popup Bootstrap selalu berada di atas Sidebar & Navbar */
+  .modal {
+    z-index: 2000 !important;
+  }
+  .modal-backdrop {
+    z-index: 1990 !important;
+  }
+
+  /* Hilangkan ikon mata & tombol hapus bawaan browser (Edge, Chrome, WebKit) pada input password */
+  #inputKodeAdmin::-ms-reveal,
+  #inputKodeAdmin::-ms-clear,
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+  #inputKodeAdmin::-webkit-credentials-auto-fill-button,
+  #inputKodeAdmin::-webkit-contacts-auto-fill-button,
+  input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden !important;
+    display: none !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    right: 0 !important;
+  }
+
   /* ---------------------------------------------------- */
   /* 8. SETTINGAN KHUSUS MOBILE (RESPONSIF UTAMA)         */
   /* ---------------------------------------------------- */
@@ -1111,11 +1119,16 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
       top: 0;
       left: 0;
       height: 100vh;
-      width: 270px;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 280px;
       z-index: 1060;
       border-radius: 0 20px 20px 0;
       box-shadow: 5px 0 25px rgba(0, 0, 0, 0.3);
       transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      -webkit-overflow-scrolling: touch;
     }
     #sidebar.active {
       transform: translateX(0);
@@ -1124,7 +1137,7 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
       content: "";
       position: fixed;
       top: 0;
-      left: 270px;
+      left: 280px;
       width: 200vw;
       height: 100vh;
       background: rgba(0, 0, 0, 0.4);
@@ -1132,7 +1145,35 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
       z-index: -1;
     }
     #sidebar-content-wrapper {
-      padding-bottom: 20px;
+      padding-bottom: 60px;
+      min-height: 100%;
+      overflow-y: visible !important;
+    }
+
+    /* Tombol Tutup (X) Sidebar khusus Mobile */
+    .sidebar-mobile-close {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 20;
+    }
+    .sidebar-mobile-close:hover,
+    .sidebar-mobile-close:active {
+      background: rgba(239, 68, 68, 0.9);
+      border-color: #ef4444;
+      transform: scale(1.05);
     }
 
     #page-data .main-card,
@@ -1185,16 +1226,100 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
     .custom-table-wrapper table {
       min-width: 900px !important;
     }
+    /* Tampilan Footer Tabel & Paging di Layar HP (Mobile) */
     .dt-footer-row {
-      flex-direction: column;
-      text-align: center;
-      gap: 15px;
-      padding: 15px;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      gap: 12px !important;
+      padding: 16px 14px !important;
+      background-color: #ffffff !important;
     }
-    .dataTables_paginate {
-      display: flex;
-      justify-content: center;
-      width: 100%;
+    .dt-footer-row > div {
+      width: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      text-align: center !important;
+      gap: 10px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .dataTables_info,
+    #mainTable_info {
+      width: 100% !important;
+      text-align: center !important;
+      font-size: 0.82rem !important;
+      color: #64748b !important;
+      font-weight: 500 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      line-height: 1.4 !important;
+    }
+    .dt-footer-row .dataTables_paginate {
+      order: 1 !important;
+      width: 100% !important;
+      display: flex !important;
+      justify-content: center !important;
+      margin: 2px 0 0 0 !important;
+    }
+    .dt-footer-row .dataTables_paginate .pagination {
+      display: flex !important;
+      justify-content: center !important;
+      flex-wrap: wrap !important;
+      gap: 5px !important;
+      margin: 0 !important;
+    }
+    .dt-footer-row .dataTables_paginate .page-item .page-link {
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      color: #475569 !important;
+      font-weight: 600 !important;
+      font-size: 0.8rem !important;
+      min-width: 34px !important;
+      height: 34px !important;
+      padding: 4px 10px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: #f8fafc !important;
+    }
+    .dt-footer-row .dataTables_paginate .page-item.active .page-link {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: #ffffff !important;
+      border-color: transparent !important;
+      box-shadow: 0 3px 8px rgba(102, 126, 234, 0.4) !important;
+    }
+    .dt-footer-row .dataTables_length {
+      order: 2 !important;
+      width: 100% !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      font-size: 0.78rem !important;
+      color: #94a3b8 !important;
+      margin: 0 !important;
+    }
+    .dt-footer-row .dataTables_length label {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      margin: 0 !important;
+      font-size: 0.78rem !important;
+      color: #64748b !important;
+    }
+    .dt-footer-row .dataTables_length select {
+      font-size: 0.78rem !important;
+      padding: 3px 8px !important;
+      border-radius: 6px !important;
+      border: 1px solid #cbd5e1 !important;
+      background-color: #f8fafc !important;
+      color: #334155 !important;
+      margin: 0 !important;
     }
 
     .rekap-sub-sidebar {
@@ -1259,65 +1384,128 @@ Berisi seluruh pengaturan warna, ukuran font, tata letak, dan animasi web.
   }
 
   /* ---------------------------------------------------- */
-  /* 9. PENGATURAN HALAMAN VISUAL (LOOKER STUDIO)         */
+  /* 9. PENGATURAN HALAMAN & LOOKER STUDIO                */
   /* ---------------------------------------------------- */
 
-  /* PENGATURAN UNTUK DESKTOP / LAPTOP */
-  #page-visual {
-    width: 100%;
-    height: 100%;
-    display: block;
-    padding: 0;
-    overflow: hidden;
+  /* Sembunyikan seluruh main-page secara ketat jika tidak aktif */
+  .main-page {
+    display: none !important;
   }
-  .wrapper-looker {
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    position: relative;
+  .main-page.active-page {
+    display: block !important;
+  }
+  #page-data.active-page {
+    display: flex !important;
+  }
+  #page-rekap.active-page {
+    display: block !important;
+  }
+  #page-visual.active-page {
+    display: block !important;
+  }
+
+  /* PENGATURAN UNTUK DESKTOP / LAPTOP (> 1024px) */
+  #page-visual.active-page {
+    width: 100% !important;
+    height: calc(100vh - 50px) !important;
+    height: calc(100dvh - 50px) !important;
+    min-height: 500px;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column;
     overflow: hidden;
   }
   #frame-desktop {
-    width: 100%;
-    height: calc(
-      100% + 50px
-    ); /* Memperluas tinggi agar ada ruang untuk ditarik */
-    margin-top: 0; /* Menarik iframe ke atas untuk memotong header putih Looker */
-    border: none;
-    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1;
+    border: none !important;
+    border-radius: 12px;
+    display: block !important;
+  }
+  #frame-tab {
+    display: none !important;
   }
   #frame-mobile {
-    display: none;
+    display: none !important;
   }
 
-  /* PENGATURAN UNTUK MOBILE / HP */
+  /* Hilangkan scroll pada container pembungkus (#content) saat dashboard Looker aktif */
+  body.view-visual #content,
+  #content:has(#page-visual.active-page) {
+    overflow-y: hidden !important;
+  }
+
+  /* PENGATURAN UNTUK TAB / TABLET (769px - 1024px) */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    #page-visual.active-page {
+      width: 100% !important;
+      height: calc(100vh - 50px) !important;
+      height: calc(100dvh - 50px) !important;
+      min-height: 500px;
+      padding: 0 !important;
+      margin: 0 !important;
+      display: flex !important;
+      flex-direction: column;
+      overflow: hidden !important;
+    }
+    #frame-desktop {
+      display: none !important;
+    }
+    #frame-tab {
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      flex: 1;
+      border: none !important;
+      border-radius: 12px !important;
+    }
+    #frame-mobile {
+      display: none !important;
+    }
+  }
+
+  /* PENGATURAN KHUSUS DASHBOARD MOBILE / HP (<= 768px) */
   @media (max-width: 768px) {
-    #page-visual {
-      width: calc(100% + 24px) !important;
-      margin-left: -12px !important;
-      margin-top: -12px !important;
+    #page-data.active-page {
+      display: block !important;
+    }
+
+    /* Ketika tab dashboard aktif di mobile: sesuaikan viewport konten agar pas tanpa scroll ganda */
+    body.view-visual #content,
+    #content:has(#page-visual.active-page) {
+      padding: 0 !important;
+      overflow: hidden !important;
       height: calc(100vh - 65px) !important;
+      height: calc(100dvh - 65px) !important;
+    }
+
+    #page-visual.active-page {
+      display: block !important;
+      width: 100% !important;
+      height: calc(100vh - 65px) !important;
+      height: calc(100dvh - 65px) !important;
+      min-height: calc(100vh - 65px) !important;
+      min-height: calc(100dvh - 65px) !important;
+      margin: 0 !important;
       padding: 0 !important;
       overflow: hidden !important;
     }
-    .wrapper-looker {
-      border-radius: 0 !important;
-      margin-top: 0 !important;
-      width: 100% !important;
-      height: 100% !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      -webkit-overflow-scrolling: touch;
-    }
+
     #frame-desktop {
+      display: none !important;
+    }
+    #frame-tab {
       display: none !important;
     }
     #frame-mobile {
       display: block !important;
       width: 100% !important;
-      height: 1350px !important; /* Menentukan tinggi pas untuk versi mobile */
-      min-height: 1350px !important;
-      margin-top: -55px !important; /* Menarik iframe ke atas untuk menghilangkan ruang putih atas */
+      height: 100% !important;
+      min-height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
       border: none !important;
     }
   }

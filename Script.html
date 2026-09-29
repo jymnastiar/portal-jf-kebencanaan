@@ -130,6 +130,14 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
         $("#sidebar").toggleClass("active");
       });
 
+    // 3b. KODE TOMBOL TUTUP X SIDEBAR (Khusus HP)
+    $("#sidebar-close-btn")
+      .off("click")
+      .on("click", function (e) {
+        e.stopPropagation();
+        $("#sidebar").removeClass("active");
+      });
+
     // Menutup sidebar jika mengeklik layar luar (area gelap)
     $(document).on("click", function (e) {
       if (
@@ -196,8 +204,15 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   // =========================================================
   function initLookerFrame() {
     try {
-      var isMobile = $(window).width() <= 768;
-      var activeId = isMobile ? "#frame-mobile" : "#frame-desktop";
+      var w = $(window).width();
+      var activeId;
+      if (w <= 768) {
+        activeId = "#frame-mobile";
+      } else if (w <= 1024) {
+        activeId = "#frame-tab";
+      } else {
+        activeId = "#frame-desktop";
+      }
       var frame = $(activeId);
       if (frame.length && !frame.attr("src")) {
         var dSrc = frame.attr("data-src");
@@ -517,7 +532,11 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
             previous: '<i class="fas fa-chevron-left"></i>',
             next: '<i class="fas fa-chevron-right"></i>',
           },
-          lengthMenu: "Show _MENU_ entries",
+          info: "Menampilkan _START_ - _END_ dari _TOTAL_ data",
+          infoEmpty: "Tidak ada data",
+          infoFiltered: "(dari _MAX_ data)",
+          lengthMenu: "Tampilkan _MENU_ data",
+          zeroRecords: "Data tidak ditemukan",
         },
       });
     } catch (e) {
@@ -540,22 +559,27 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   // 4. FUNGSI NAVIGASI PINDAH HALAMAN (MENU KIRI)
   // =========================================================
   function switchMenu(menu) {
-    $(".main-page").hide();
+    $(".main-page").removeClass("active-page").hide().css("display", "none");
     $("#sidebar ul li a").removeClass("active");
     $("#menu-" + menu).addClass("active");
+    $("body").removeClass("view-visual view-data view-rekap view-formasi").addClass("view-" + menu);
 
     if (menu === "visual") {
-      $("#page-visual").show();
+      $("#page-visual").addClass("active-page").show().css("display", "block");
       initLookerFrame();
     } else if (menu === "data") {
-      $("#page-data").show();
+      $("#page-data").addClass("active-page").show();
     } else if (menu === "rekap") {
-      $("#page-rekap").show();
+      $("#page-rekap").addClass("active-page").show().css("display", "block");
       ensureSubRekapRendered("daerah");
     } else if (menu === "formasi") {
-      $("#page-formasi").show();
+      $("#page-formasi").addClass("active-page").show().css("display", "block");
       loadRekapFormasi(); // Langsung memuat data saat menu diklik
     }
+
+    // Scroll konten kembali ke atas saat ganti halaman
+    var contentEl = document.getElementById("content");
+    if (contentEl) contentEl.scrollTop = 0;
 
     // Menutup sidebar jika di HP
     if ($(window).width() <= 768) {
@@ -2328,6 +2352,16 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   }
 
   function openDownloadModal() {
+    if (!isUserAdmin()) {
+      showAppToast(
+        "<b>Akses Terbatas!</b> Fitur Download Data hanya dapat diakses oleh Role Admin.",
+        "warning",
+      );
+      return;
+    }
+    if ($(window).width() <= 768) {
+      $("#sidebar").removeClass("active");
+    }
     if (
       !window.currentUnitMap ||
       Object.keys(window.currentUnitMap).length === 0
@@ -2453,6 +2487,9 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   }
 
   function openContactModal() {
+    if ($(window).width() <= 768) {
+      $("#sidebar").removeClass("active");
+    }
     new bootstrap.Modal("#contactModal").show();
   }
 
@@ -2623,6 +2660,9 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
   }
 
   function openFormModal() {
+    if ($(window).width() <= 768) {
+      $("#sidebar").removeClass("active");
+    }
     document.getElementById("modalForm").style.display = "flex";
   }
   function closeFormModal() {
@@ -2649,6 +2689,7 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
     var txt = $("#btn-admin-text");
     var icon = $("#btn-admin-icon");
     var badge = $("#admin-badge-indicator");
+    var downloadItem = $("#menu-download-item");
 
     if (adminActive) {
       btn
@@ -2657,9 +2698,10 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
       txt.text("Keluar dari Admin");
       icon.attr("class", "fas fa-sign-out-alt me-2");
       badge.fadeIn(200);
+      downloadItem.show();
       if (showNotification) {
         showAppToast(
-          "<b>Akses Admin Aktif!</b> Menu dropdown aksi dan update status pegawai telah dibuka.",
+          "<b>Akses Admin Aktif!</b> Menu aksi, download data, dan pembaruan status telah dibuka.",
           "success",
         );
       }
@@ -2668,6 +2710,7 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
       txt.text("Role Admin");
       icon.attr("class", "fas fa-user-shield me-2");
       badge.hide();
+      downloadItem.hide();
       if (showNotification) {
         showAppToast(
           "<b>Keluar dari Mode Admin.</b> Tampilan aksi kembali ke pensil biasa.",
@@ -2691,6 +2734,9 @@ FILE 4: Script.html (LOGIKA PROGRAM / JAVASCRIPT)
 
   // Handle klik tombol Role Admin di sidebar
   function handleAdminRoleButtonClick() {
+    if ($(window).width() <= 768) {
+      $("#sidebar").removeClass("active");
+    }
     if (isUserAdmin()) {
       // Keluar dari mode admin
       sessionStorage.removeItem("isAdmin");
